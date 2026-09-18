@@ -12,7 +12,7 @@
     "seed": "prisma db seed"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts && tsx prisma/seed-open-images.ts"
+    "seed": "tsx prisma/seed-all.ts"
   },
   "dependencies": {
     "@prisma/client": "6.16.2",
