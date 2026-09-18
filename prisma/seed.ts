@@ -1,4 +1,4 @@
-import { PrismaClient, Priority } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -52,11 +52,9 @@ async function main() {
     ci++;
   }
 
-  const colors: Record<string, string> = {};
   for (let i = 0; i < colorSeed.length; i++) {
     const [name, hex] = colorSeed[i];
-    const c = await prisma.color.upsert({ where: { name }, update: { hex, sortOrder: i }, create: { name, hex, sortOrder: i } });
-    colors[name] = c.id;
+    await prisma.color.upsert({ where: { name }, update: { hex, sortOrder: i }, create: { name, hex, sortOrder: i } });
   }
 
   let order = 0;
@@ -69,7 +67,7 @@ async function main() {
             name,
             categoryId: categories[category],
             desiredQuantity: 1,
-            priority: Priority.NORMAL,
+            priority: "NORMAL",
             sortOrder: order++,
             active: true
           }
