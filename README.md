@@ -112,7 +112,7 @@ Nunca grave uploads no filesystem do Render; no MVP as imagens são URLs. Para u
 
 ## Backup PostgreSQL
 
-Use os recursos de backup/exportação do plano Render PostgreSQL contratado. Para cóia manual com URL externa segura:
+Use os recursos de backup/exportação do plano Render PostgreSQL contratado. Para cópia manual com URL externa segura:
 
 ```bash
 pg_dump "$DATABASE_URL" > backup.sql
@@ -122,7 +122,7 @@ Não armazene dumps com dados pessoais em repositórios públicos.
 
 ## Observações de arquitetura
 
-- Presentes com cotas possuem suporte no modelo e no fluxo de reserva, sem pagamentos falsos.
+- Presentes com cotas já possuem campos e tabela de suporte no modelo, preparados para evolução. O fluxo de pagamento não é falso: não há processamento de cartão.
 - PIX permanece desligado por padrão.
 - Horário, local e endereço começam vazios e devem ser preenchidos no admin.
 - O casamento aparece como contexto secundário; o foco é o Chá de Panela.

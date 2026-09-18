@@ -1,0 +1,182 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Priority { HIGH NORMAL OPTIONAL }
+enum ReservationStatus { RESERVED CANCELLED DELIVERED }
+enum MessageStatus { PENDING APPROVED HIDDEN }
+enum InstallmentStatus { AVAILABLE RESERVED CANCELLED }
+
+model Admin {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  name         String?
+  passwordHash String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  auditLogs    AuditLog[]
+}
+
+model EventSettings {
+  id                  String   @id @default("main")
+  coupleName          String   @default("Pedro & Larissa")
+  showerDate          DateTime @default(dbgenerated("'2026-11-21T15:00:00.000Z'::timestamp"))
+  weddingDate         DateTime @default(dbgenerated("'2027-03-20T15:00:00.000Z'::timestamp"))
+  showerTime          String?
+  venue               String?
+  address             String?
+  mapsUrl             String?
+  homeText            String   @default("Escolhemos algumas coisinhas para deixar nossa casa ainda mais especial. Fique à vontade para escolher o presente que mais combinar com você. 💛")
+  storyText           String   @default("Este espaço é editável no painel administrativo para Pedro e Larissa contarem um pouco da história deles.")
+  guestMessage        String   @default("Nosso grande dia está chegando e queremos celebrar essa nova fase ao lado de pessoas especiais.")
+  heroImageUrl        String?
+  coupleImageUrl      String?
+  pixEnabled          Boolean  @default(false)
+  pixKey              String?
+  pixRecipient        String?
+  pixQrCodeUrl        String?
+  instagram           String?
+  whatsapp            String?
+  seoTitle            String   @default("Chá de Panela | Pedro & Larissa")
+  seoDescription      String   @default("Chá de Panela de Pedro & Larissa — 21 de novembro de 2026.")
+  shareImageUrl       String?
+  rsvpAllowCompanions Boolean  @default(true)
+  updatedAt           DateTime @updatedAt
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  icon      String?
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+  gifts     Gift[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Color {
+  id        String      @id @default(cuid())
+  name      String      @unique
+  hex       String?
+  active    Boolean     @default(true)
+  sortOrder Int         @default(0)
+  gifts     GiftColor[]
+}
+
+model Gift {
+  id                 String              @id @default(cuid())
+  name               String
+  description        String?
+  categoryId         String
+  category           Category            @relation(fields: [categoryId], references: [id])
+  imageUrl           String?
+  approximateValue   Decimal?            @db.Decimal(10,2)
+  priority           Priority            @default(NORMAL)
+  desiredQuantity    Int                 @default(1)
+  reservedQuantity   Int                 @default(0)
+  brand              String?
+  model              String?
+  note               String?
+  purchaseUrl        String?
+  active             Boolean             @default(true)
+  spotlight          Boolean             @default(false)
+  acceptsInstallments Boolean            @default(false)
+  installmentCount   Int?
+  installmentValue   Decimal?            @db.Decimal(10,2)
+  sortOrder          Int                 @default(0)
+  colors             GiftColor[]
+  reservations       GiftReservation[]
+  installments       GiftInstallment[]
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  @@index([categoryId, active, priority, sortOrder])
+}
+
+model GiftColor {
+  giftId  String
+  colorId String
+  gift    Gift  @relation(fields: [giftId], references: [id], onDelete: Cascade)
+  color   Color @relation(fields: [colorId], references: [id], onDelete: Cascade)
+  @@id([giftId, colorId])
+}
+
+model GiftReservation {
+  id          String            @id @default(cuid())
+  giftId      String
+  gift        Gift              @relation(fields: [giftId], references: [id])
+  name        String
+  phone       String
+  message     String?
+  quantity    Int               @default(1)
+  status      ReservationStatus @default(RESERVED)
+  tokenHash   String            @unique
+  cancelledAt DateTime?
+  deliveredAt DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  installment GiftInstallment?
+  @@index([giftId, status])
+  @@index([createdAt])
+}
+
+model GiftInstallment {
+  id            String            @id @default(cuid())
+  giftId        String
+  gift          Gift              @relation(fields: [giftId], references: [id], onDelete: Cascade)
+  number        Int
+  status        InstallmentStatus @default(AVAILABLE)
+  reservationId String?           @unique
+  reservation   GiftReservation?  @relation(fields: [reservationId], references: [id])
+  @@unique([giftId, number])
+}
+
+model Rsvp {
+  id               String   @id @default(cuid())
+  name             String
+  phone            String?
+  attending        Boolean
+  companions       Int      @default(0)
+  companionNames   String?
+  dietaryRestriction String?
+  message          String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  @@index([phone])
+  @@index([attending])
+}
+
+model GuestMessage {
+  id        String        @id @default(cuid())
+  name      String
+  message   String
+  status    MessageStatus @default(PENDING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  @@index([status, createdAt])
+}
+
+model SiteContent {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  content   String
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  adminId   String?
+  admin     Admin?   @relation(fields: [adminId], references: [id])
+  action    String
+  entity    String
+  entityId  String?
+  details   Json?
+  createdAt DateTime @default(now())
+  @@index([createdAt])
+}

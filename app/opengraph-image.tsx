@@ -1,0 +1,3 @@
+import { ImageResponse } from "next/og";
+export const size={width:1200,height:630};export const contentType="image/png";
+export default function Image(){return new ImageResponse(<div style={{width:"100%",height:"100%",display:"flex",flexDirection:"column",justifyContent:"center",padding:"100px",background:"#f8f5ef",color:"#292824"}}><div style={{fontFamily:"serif",fontSize:88}}>Pedro & Larissa</div><div style={{fontSize:38,color:"#716e66",marginTop:28}}>Chá de Panela</div><div style={{fontSize:38,color:"#716e66",marginTop:10}}>21.11.2026</div><div style={{width:"100%",height:3,background:"#d6c4a8",marginTop:72}}/></div>,size)}

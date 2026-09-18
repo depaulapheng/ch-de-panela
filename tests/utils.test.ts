@@ -1,0 +1,2 @@
+import { describe,it,expect } from "vitest";import{hashToken,normalizePhone,slugify}from"../lib/utils";
+describe("helpers",()=>{it("normaliza telefone",()=>expect(normalizePhone("(31) 99999-0000")).toBe("31999990000"));it("gera slug estável",()=>expect(slugify("Quarto & Casa")).toBe("quarto-e-casa"));it("hash de token não expõe token",()=>{const t="segredo";expect(hashToken(t)).not.toContain(t);expect(hashToken(t)).toHaveLength(64)})});

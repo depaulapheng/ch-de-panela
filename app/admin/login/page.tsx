@@ -1,0 +1,2 @@
+import { redirect } from "next/navigation";import{getAdmin}from"@/lib/auth";import{AdminLogin}from"@/components/AdminLogin";
+export default async function Login(){if(await getAdmin())redirect("/admin");return <main className="section"><div className="container" style={{maxWidth:520}}><div className="eyebrow">Área restrita</div><h1 className="title">Painel administrativo</h1><AdminLogin/></div></main>}

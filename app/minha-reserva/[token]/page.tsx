@@ -1,0 +1,2 @@
+import { ReservationManager } from "@/components/ReservationManager";
+export default async function Page({params}:{params:Promise<{token:string}>}){const{token}=await params;return <main className="section"><div className="container" style={{maxWidth:680}}><div className="eyebrow">Link pessoal</div><h1 className="title">Minha reserva</h1><p className="muted">Este endereço é pessoal. Por aqui você pode consultar, editar a mensagem ou cancelar sua reserva.</p><ReservationManager token={token}/></div></main>}
