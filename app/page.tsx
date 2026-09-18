@@ -86,6 +86,18 @@ export default async function Home(){
 
     {s?.pixEnabled&&<section className="section-sm"><div className="container"><div className="card info-card" style={{maxWidth:720,margin:"auto",textAlign:"center"}}><div className="eyebrow">Contribuição opcional</div><h2 className="subtitle">Prefere contribuir com a nossa casa?</h2><p className="muted">O foco continua sendo a lista de presentes. Esta opção existe apenas para quem preferir contribuir de outra forma.</p>{s.pixRecipient&&<p><strong>{s.pixRecipient}</strong></p>}{s.pixKey&&<p className="notice">Chave PIX: {s.pixKey}</p>}</div></div></section>}
 
+
+    <section className="section-sm photo-invite-band">
+      <div className="container photo-invite">
+        <div>
+          <div className="eyebrow">Memórias compartilhadas</div>
+          <h2 className="subtitle">Depois do chá, queremos ver o dia pelos olhos de vocês.</h2>
+          <p className="muted">Nosso álbum será aberto aos convidados para enviar e baixar as fotos da comemoração.</p>
+        </div>
+        <Link className="btn btn-primary" href="/fotos">Ver álbum de fotos</Link>
+      </div>
+    </section>
+
     <section className="section wedding-band">
       <div className="container" style={{textAlign:"center",maxWidth:800}}>
         <div className="eyebrow wedding-eyebrow">E depois vem o grande dia… 💍</div>
