@@ -134,7 +134,12 @@ async function main() {
           }
         } catch (error) {
           failed++;
-          console.warn(`   • falha ao buscar ${gift.name}:`, error instanceof Error ? error.message : error);
+          const message = error instanceof Error ? error.message : String(error);
+          console.warn(`   • falha ao buscar ${gift.name}: ${message}`);
+          if (message.includes("GOOGLE_IMAGE_HTTP_403")) {
+            console.warn("   • Google recusou a API; interrompendo esta sincronização para evitar chamadas repetidas.");
+            break;
+          }
         }
         await new Promise(resolve => setTimeout(resolve, 160));
       }
