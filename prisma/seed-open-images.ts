@@ -9,7 +9,7 @@ const terms: Record<string,string> = {
   "Pegador de macarrão":"pasta serving tongs",
   "Fouet":"kitchen whisk",
   "Ralador":"box grater",
-  "Peneira":"kitchen sieve",
+  "Peneira":"kitchen sieve strainer",
   "Escorredor de macarrão":"kitchen colander",
   "Tábua de corte":"cutting board",
   "Abridor de latas":"can opener",
@@ -33,7 +33,7 @@ const terms: Record<string,string> = {
   "Porta-talheres":"cutlery holder",
   "Organizador de gaveta":"drawer organizer",
   "Organizador de geladeira":"refrigerator organizer",
-  "Porta-detergente":"soap dispenser kitchen",
+  "Porta-detergente":"soap dispenser kitchen sink",
   "Escorredor de talheres":"cutlery drainer",
   "Mesa":"dining table",
   "Jarra":"water pitcher",
@@ -44,7 +44,7 @@ const terms: Record<string,string> = {
   "Travessa pequena":"serving dish",
   "Petisqueira":"snack serving tray",
   "Saladeira pequena":"salad bowl",
-  "Jogo americano":"placemat",
+  "Jogo americano":"placemat table setting",
   "Sousplat":"charger plate",
   "Rodo":"floor squeegee",
   "Pá de lixo":"dustpan",
@@ -72,25 +72,45 @@ type OVImage = {
   url?: string;
   thumbnail?: string;
   license?: string;
+  license_version?: string;
+  creator?: string;
+  source?: string;
+  foreign_landing_url?: string;
   watermarked?: boolean;
   mature?: boolean;
 };
 
+const usableLicenses = new Set(["cc0","pdm","by","by-sa","by-nc","by-nc-sa"]);
+
 async function findOpenImage(name:string) {
   const q = terms[name] || name;
-  const params = new URLSearchParams({q,page_size:"20",mature:"false"});
+  const params = new URLSearchParams({q,page_size:"50",mature:"false"});
   const response = await fetch(`https://api.openverse.org/v1/images/?${params.toString()}`,{
     headers:{"user-agent":"Larissa-Pedro-Gift-Registry/1.0"}
   });
   if(!response.ok) throw new Error(`OPENVERSE_HTTP_${response.status}`);
   const data = await response.json() as {results?:OVImage[]};
-  const item = data.results?.find(x =>
-    (x.license === "cc0" || x.license === "pdm") &&
+  const results=(data.results||[]).filter(x =>
+    usableLicenses.has((x.license||"").toLowerCase()) &&
     !x.watermarked &&
     !x.mature &&
-    Boolean(x.url || x.thumbnail)
+    Boolean(x.thumbnail || x.url)
   );
-  return item?.url || item?.thumbnail || null;
+  const item =
+    results.find(x => ["cc0","pdm"].includes((x.license||"").toLowerCase())) ||
+    results[0];
+
+  if(!item) return null;
+
+  const license=(item.license||"").toUpperCase() + (item.license_version ? ` ${item.license_version}` : "");
+  const publicDomain=["CC0","PDM"].includes((item.license||"").toUpperCase());
+
+  return {
+    imageUrl:item.thumbnail || item.url || null,
+    imageCredit: publicDomain ? null : (item.creator || item.source || "Openverse"),
+    imageLicense: publicDomain ? null : license,
+    imageSourceUrl:item.foreign_landing_url || null
+  };
 }
 
 async function main(){
@@ -101,25 +121,25 @@ async function main(){
   });
   if(!gifts.length) return;
 
-  console.log(`🌸 Openverse: procurando fotos abertas para ${gifts.length} presente(s)...`);
+  console.log(`🌸 Openverse: procurando fotos reais para ${gifts.length} presente(s)...`);
   let synced=0, failed=0;
 
   for(const gift of gifts){
     try{
-      const imageUrl=await findOpenImage(gift.name);
-      if(imageUrl){
-        await prisma.gift.update({where:{id:gift.id},data:{imageUrl}});
+      const found=await findOpenImage(gift.name);
+      if(found?.imageUrl){
+        await prisma.gift.update({where:{id:gift.id},data:found});
         synced++;
         console.log(`   ✓ ${gift.name}`);
       }else{
         failed++;
-        console.log(`   • sem foto CC0/PDM: ${gift.name}`);
+        console.log(`   • sem foto adequada: ${gift.name}`);
       }
     }catch(error){
       failed++;
       console.warn(`   • falha: ${gift.name} - ${error instanceof Error?error.message:String(error)}`);
     }
-    await new Promise(resolve=>setTimeout(resolve,220));
+    await new Promise(resolve=>setTimeout(resolve,180));
   }
   console.log(`🌸 Openverse: ${synced} foto(s) aplicadas; ${failed} sem foto.`);
 }
