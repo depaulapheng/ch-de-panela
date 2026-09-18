@@ -7,11 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Priority { HIGH NORMAL OPTIONAL }
-enum ReservationStatus { RESERVED CANCELLED DELIVERED }
-enum MessageStatus { PENDING APPROVED HIDDEN }
-enum InstallmentStatus { AVAILABLE RESERVED CANCELLED }
-
 model Admin {
   id           String     @id @default(cuid())
   email        String     @unique
@@ -78,7 +73,7 @@ model Gift {
   category            Category          @relation(fields: [categoryId], references: [id])
   imageUrl            String?
   approximateValue    Decimal?
-  priority            Priority          @default(NORMAL)
+  priority            String            @default("NORMAL")
   desiredQuantity     Int               @default(1)
   reservedQuantity    Int               @default(0)
   brand               String?
@@ -110,19 +105,19 @@ model GiftColor {
 }
 
 model GiftReservation {
-  id          String            @id @default(cuid())
+  id          String   @id @default(cuid())
   giftId      String
-  gift        Gift              @relation(fields: [giftId], references: [id])
+  gift        Gift     @relation(fields: [giftId], references: [id])
   name        String
   phone       String
   message     String?
-  quantity    Int               @default(1)
-  status      ReservationStatus @default(RESERVED)
-  tokenHash   String            @unique
+  quantity    Int      @default(1)
+  status      String   @default("RESERVED")
+  tokenHash   String   @unique
   cancelledAt DateTime?
   deliveredAt DateTime?
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   installment GiftInstallment?
 
   @@index([giftId, status])
@@ -130,13 +125,13 @@ model GiftReservation {
 }
 
 model GiftInstallment {
-  id            String            @id @default(cuid())
+  id            String           @id @default(cuid())
   giftId        String
-  gift          Gift              @relation(fields: [giftId], references: [id], onDelete: Cascade)
+  gift          Gift             @relation(fields: [giftId], references: [id], onDelete: Cascade)
   number        Int
-  status        InstallmentStatus @default(AVAILABLE)
-  reservationId String?           @unique
-  reservation   GiftReservation?  @relation(fields: [reservationId], references: [id])
+  status        String           @default("AVAILABLE")
+  reservationId String?          @unique
+  reservation   GiftReservation? @relation(fields: [reservationId], references: [id])
 
   @@unique([giftId, number])
 }
@@ -158,12 +153,12 @@ model Rsvp {
 }
 
 model GuestMessage {
-  id        String        @id @default(cuid())
+  id        String   @id @default(cuid())
   name      String
   message   String
-  status    MessageStatus @default(PENDING)
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([status, createdAt])
 }
