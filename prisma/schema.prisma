@@ -77,6 +77,9 @@ model Gift {
   categoryId         String
   category           Category            @relation(fields: [categoryId], references: [id])
   imageUrl           String?
+  imageCredit        String?
+  imageLicense       String?
+  imageSourceUrl     String?
   approximateValue   Decimal?            @db.Decimal(10,2)
   priority           Priority            @default(NORMAL)
   desiredQuantity    Int                 @default(1)
