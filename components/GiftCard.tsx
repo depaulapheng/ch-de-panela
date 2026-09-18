@@ -2,7 +2,7 @@ import Link from "next/link";
 import { money } from "@/lib/utils";
 
 type Gift={
-  id:string;name:string;description:string|null;imageUrl:string|null;approximateValue:any;
+  id:string;name:string;description:string|null;imageUrl:string|null;imageCredit?:string|null;imageLicense?:string|null;imageSourceUrl?:string|null;approximateValue:any;
   desiredQuantity:number;reservedQuantity:number;priority:string;purchaseUrl:string|null;
   category:{name:string;icon:string|null};colors:{color:{name:string;hex:string|null}}[]
 };
@@ -13,7 +13,7 @@ export function GiftCard({gift}:{gift:Gift}){
   return <article className="card gift-card">
     <div className="gift-img">
       {gift.imageUrl
-        ?<img src={gift.imageUrl} alt={gift.name} loading="lazy" referrerPolicy="no-referrer"/>
+        ?<><img src={gift.imageUrl} alt={gift.name} loading="lazy" referrerPolicy="no-referrer"/>{gift.imageCredit&&<a className="image-credit" href={gift.imageSourceUrl||gift.imageUrl} target="_blank" rel="noreferrer">Foto: {gift.imageCredit}{gift.imageLicense?` · ${gift.imageLicense}`:""}</a>}</>
         :<div className="gift-photo-placeholder"><span>{gift.category.name}</span><small>Imagem em atualização</small></div>}
     </div>
     <div className="gift-body">
