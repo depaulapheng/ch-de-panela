@@ -1,2 +1,18 @@
-import { prisma } from "@/lib/db"; import { MessageForm } from "@/components/MessageForm";
-export default async function Messages(){const msgs=await prisma.guestMessage.findMany({where:{status:"APPROVED"},orderBy:{createdAt:"desc"},take:50});return <main className="section"><div className="container grid grid-2"><div><div className="eyebrow">Um carinho para Pedro & Larissa</div><h1 className="title">Mural de recados</h1>{msgs.length?msgs.map(m=><div className="card info-card" key={m.id} style={{marginBottom:14}}><p>“{m.message}”</p><div className="muted">— {m.name}</div></div>):<p className="muted">Ainda não há recados publicados.</p>}</div><div><MessageForm/></div></div></main>}
+import { prisma } from "@/lib/db";
+import { MessageForm } from "@/components/MessageForm";
+
+export default async function Messages(){
+  const msgs=await prisma.guestMessage.findMany({where:{status:"APPROVED"},orderBy:{createdAt:"desc"},take:100});
+  return <main className="section">
+    <div className="container grid grid-2">
+      <div>
+        <div className="eyebrow">Um carinho para Larissa & Pedro</div>
+        <h1 className="title">Mural de recados</h1>
+        {msgs.length
+          ?msgs.map(m=><div className="card info-card" key={m.id} style={{marginBottom:14}}><p>“{m.message}”</p><div className="muted">— {m.name}</div></div>)
+          :<p className="muted">Ainda não há recados publicados.</p>}
+      </div>
+      <div><MessageForm/></div>
+    </div>
+  </main>;
+}
