@@ -19,7 +19,7 @@ model Admin {
 
 model EventSettings {
   id                  String   @id @default("main")
-  coupleName          String   @default("Pedro & Larissa")
+  coupleName          String   @default("Larissa & Pedro")
   showerDate          DateTime @default(now())
   weddingDate         DateTime @default(now())
   showerTime          String?
@@ -27,7 +27,7 @@ model EventSettings {
   address             String?
   mapsUrl             String?
   homeText            String   @default("Escolhemos algumas coisinhas para deixar nossa casa ainda mais especial. Fique à vontade para escolher o presente que mais combinar com você. 💛")
-  storyText           String   @default("Este espaço é editável no painel administrativo para Pedro e Larissa contarem um pouco da história deles.")
+  storyText           String   @default("Este espaço é editável no painel administrativo para Larissa e Pedro contarem um pouco da história deles.")
   guestMessage        String   @default("Nosso grande dia está chegando e queremos celebrar essa nova fase ao lado de pessoas especiais.")
   heroImageUrl        String?
   coupleImageUrl      String?
@@ -37,10 +37,10 @@ model EventSettings {
   pixQrCodeUrl        String?
   instagram           String?
   whatsapp            String?
-  seoTitle            String   @default("Chá de Panela | Pedro & Larissa")
-  seoDescription      String   @default("Chá de Panela de Pedro & Larissa — 21 de novembro de 2026.")
+  seoTitle            String   @default("Chá de Panela | Larissa & Pedro")
+  seoDescription      String   @default("Chá de Panela de Larissa & Pedro — 21 de novembro de 2026.")
   shareImageUrl       String?
-  rsvpAllowCompanions Boolean  @default(true)
+  rsvpAllowCompanions Boolean  @default(false)
   updatedAt           DateTime @updatedAt
 }
 
