@@ -84,7 +84,7 @@ const usableLicenses = new Set(["cc0","pdm","by","by-sa","by-nc","by-nc-sa"]);
 
 async function findOpenImage(name:string) {
   const q = terms[name] || name;
-  const params = new URLSearchParams({q,page_size:"50",mature:"false"});
+  const params = new URLSearchParams({q,page_size:"20",mature:"false"});
   const response = await fetch(`https://api.openverse.org/v1/images/?${params.toString()}`,{
     headers:{"user-agent":"Larissa-Pedro-Gift-Registry/1.0"}
   });
