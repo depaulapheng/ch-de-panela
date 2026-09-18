@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { prisma } from "@/lib/db";
 import { GiftList } from "@/components/GiftList";
 import { serialize } from "@/lib/utils";
+import { DecorativeBirds } from "@/components/DecorativeBirds";
 
 export default async function GiftsPage(){
   const [gifts,categories]=await Promise.all([
@@ -13,7 +14,8 @@ export default async function GiftsPage(){
     prisma.category.findMany({where:{active:true},orderBy:{sortOrder:"asc"}})
   ]);
 
-  return <main className="section">
+  return <main className="section gifts-page">
+    <DecorativeBirds/>
     <div className="container">
       <div className="eyebrow">Nossa casa</div>
       <h1 className="title">Lista de presentes</h1>
