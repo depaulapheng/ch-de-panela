@@ -82,7 +82,7 @@ type OVImage = {
 
 const usableLicenses = new Set(["cc0","pdm","by","by-sa","by-nc","by-nc-sa"]);
 
-async function findOpenImage(name:string) {
+async function findOpenverseImage(name:string) {
   const q = terms[name] || name;
   const params = new URLSearchParams({q,page_size:"20",mature:"false"});
   const response = await fetch(`https://api.openverse.org/v1/images/?${params.toString()}`,{
@@ -113,6 +113,53 @@ async function findOpenImage(name:string) {
   };
 }
 
+
+function stripHtml(value:string){
+  return value.replace(/<[^>]*>/g," ").replace(/&nbsp;/g," ").replace(/&amp;/g,"&").replace(/\s+/g," ").trim();
+}
+
+async function findCommonsImage(name:string){
+  const q=terms[name] || name;
+  const params=new URLSearchParams({
+    action:"query",
+    generator:"search",
+    gsrsearch:q,
+    gsrnamespace:"6",
+    gsrlimit:"12",
+    prop:"imageinfo",
+    iiprop:"url|extmetadata|mime",
+    iiurlwidth:"900",
+    format:"json",
+    origin:"*"
+  });
+  const response=await fetch(`https://commons.wikimedia.org/w/api.php?${params.toString()}`,{
+    headers:{"user-agent":"Larissa-Pedro-Gift-Registry/1.0"}
+  });
+  if(!response.ok) return null;
+  const data=await response.json() as any;
+  const pages=Object.values(data?.query?.pages||{}) as any[];
+  for(const page of pages){
+    const info=page?.imageinfo?.[0];
+    if(!info) continue;
+    const mime=String(info.mime||"");
+    if(!mime.startsWith("image/") || mime.includes("svg")) continue;
+    const meta=info.extmetadata||{};
+    const license=String(meta.LicenseShortName?.value||"");
+    if(!/(CC0|Public domain|CC BY|CC BY-SA)/i.test(license)) continue;
+    const imageUrl=info.thumburl || info.url;
+    if(!imageUrl) continue;
+    const creator=stripHtml(String(meta.Artist?.value||meta.Credit?.value||"Wikimedia Commons"));
+    const publicDomain=/(CC0|Public domain)/i.test(license);
+    return {
+      imageUrl,
+      imageCredit:publicDomain?null:(creator||"Wikimedia Commons"),
+      imageLicense:publicDomain?null:license,
+      imageSourceUrl:`https://commons.wikimedia.org/wiki/${encodeURIComponent(String(page.title||"").replace(/ /g,"_"))}`
+    };
+  }
+  return null;
+}
+
 async function main(){
   const gifts=await prisma.gift.findMany({
     where:{active:true,imageUrl:null},
@@ -126,7 +173,7 @@ async function main(){
 
   for(const gift of gifts){
     try{
-      const found=await findOpenImage(gift.name);
+      const found=(await findOpenverseImage(gift.name)) || (await findCommonsImage(gift.name));
       if(found?.imageUrl){
         await prisma.gift.update({where:{id:gift.id},data:found});
         synced++;
