@@ -26,7 +26,8 @@ export async function searchGoogleProductImage(query: string) {
   );
 
   if (!response.ok) {
-    throw new Error(`GOOGLE_IMAGE_HTTP_${response.status}`);
+    const body = (await response.text()).replace(/\s+/g, " ").slice(0, 500);
+    throw new Error(`GOOGLE_IMAGE_HTTP_${response.status}: ${body}`);
   }
 
   const data = await response.json() as { items?: GoogleImageItem[] };
