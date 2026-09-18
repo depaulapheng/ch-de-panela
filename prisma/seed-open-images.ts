@@ -6,7 +6,7 @@ const terms: Record<string,string> = {
   "Jogo de colheres de silicone":"silicone kitchen utensils",
   "Espátula":"kitchen spatula",
   "Concha":"soup ladle",
-  "Pegador de macarrão":"pasta serving tongs",
+  "Pegador de macarrão":"spaghetti server spoon kitchen utensil",
   "Fouet":"kitchen whisk",
   "Ralador":"box grater",
   "Peneira":"kitchen sieve strainer",
