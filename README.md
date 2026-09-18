@@ -1,6 +1,6 @@
-# Chá de Panela — Pedro & Larissa
+# Chá de Panela — Larissa & Pedro
 
-Sistema web completo para o Chá de Panela de **Pedro & Larissa**, em **21/11/2026**, com lista real de presentes físicos, reservas sem cadastro, RSVP, mural moderado e painel administrativo.
+Sistema web completo para o Chá de Panela de **Larissa & Pedro**, em **21/11/2026**, com lista real de presentes físicos, reservas sem cadastro, RSVP, mural de recados e painel administrativo.
 
 ## Stack
 
@@ -15,13 +15,13 @@ Sistema web completo para o Chá de Panela de **Pedro & Larissa**, em **21/11/20
 ### Público
 - Home responsiva com contagem regressiva do chá e do casamento.
 - Informações de horário/local editáveis; nenhum dado ainda não informado é inventado.
-- Lista real de presentes de Pedro & Larissa, com categorias, busca e filtros.
+- Lista real de presentes de Larissa & Pedro, com filtro único por setor.
 - Cores preferidas em cada card quando configuradas.
 - Valores opcionais: presentes sem valor cadastrado não exibem preço.
 - Reserva sem conta com transação atômica no PostgreSQL, evitando overbooking.
 - Token pessoal `/minha-reserva/TOKEN` para consultar, editar mensagem ou cancelar.
-- RSVP sem login, com acompanhantes e restrições alimentares.
-- Mural de recados com moderação prévia.
+- RSVP sem login, com confirmação simples de presença.
+- Mural de recados com publicação imediata.
 - Página de privacidade e compartilhamento via Web Share API/cópia de link.
 
 ### Admin `/admin`
@@ -31,7 +31,7 @@ Sistema web completo para o Chá de Panela de **Pedro & Larissa**, em **21/11/20
 - Cadastro/ativação de categorias e cores.
 - Reservas com dados privados, cancelamento manual e marcação como entregue.
 - RSVP com indicadores e exportação CSV.
-- Moderação de recados.
+- Visualização dos recados enviados.
 - Configuração de evento, textos, local, Google Maps, fotos por URL, PIX opcional e SEO.
 - Auditoria das principais alterações administrativas.
 
@@ -66,7 +66,7 @@ Acesse `http://localhost:3000` e `http://localhost:3000/admin`.
 - `APP_URL`: URL pública da aplicação.
 - `SESSION_SECRET`: segredo aleatório com pelo menos 32 caracteres.
 - `ADMIN_EMAIL`: e-mail do administrador inicial.
-- `ADMIN_PASSWORD`: senha inicial forte (mínimo recomendado: 12 caracteres).
+- `ADMIN_PASSWORD`: senha inicial forte (mínimo recomendado: 12 caracteres).\n- `GOOGLE_CSE_API_KEY`: chave da Google Custom Search JSON API para imagens.\n- `GOOGLE_CSE_CX`: identificador do mecanismo de pesquisa programável do Google.
 
 O seed faz `upsert` do administrador e mantém a lista inicial existente sem duplicar itens.
 
@@ -76,7 +76,7 @@ Schema: `prisma/schema.prisma`.
 Migrations: `prisma/migrations/`.
 Seed: `prisma/seed.ts`.
 
-O seed inicial contém **somente a lista real enviada por Pedro & Larissa**, sem marcas nem valores inventados. As cores iniciais são Preto, Cinza, Branco, Bege, Bambu e Sem preferência.
+O seed inicial contém **somente a lista real enviada por Larissa & Pedro**, sem marcas nem valores inventados. As cores iniciais são Preto, Cinza, Branco, Bege, Bambu e Sem preferência.
 
 ## Testes
 
