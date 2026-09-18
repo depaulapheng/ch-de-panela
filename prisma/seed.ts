@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { searchGoogleProductImage } from "../lib/google-images";
 
 const prisma = new PrismaClient();
 
@@ -107,47 +106,6 @@ async function main() {
         });
       }
     }
-  }
-
-  if (process.env.GOOGLE_CSE_API_KEY && process.env.GOOGLE_CSE_CX) {
-    const withoutImages = await prisma.gift.findMany({
-      where: { active: true, imageUrl: null },
-      select: { id: true, name: true },
-      orderBy: { sortOrder: "asc" }
-    });
-
-    if (withoutImages.length) {
-      console.log(`🖼️  Buscando imagens reais para ${withoutImages.length} presente(s)...`);
-      let synced = 0;
-      let failed = 0;
-
-      for (const gift of withoutImages) {
-        try {
-          const imageUrl = await searchGoogleProductImage(gift.name);
-          if (imageUrl) {
-            await prisma.gift.update({ where: { id: gift.id }, data: { imageUrl } });
-            synced++;
-            console.log(`   ✓ ${gift.name}`);
-          } else {
-            failed++;
-            console.warn(`   • sem resultado: ${gift.name}`);
-          }
-        } catch (error) {
-          failed++;
-          const message = error instanceof Error ? error.message : String(error);
-          console.warn(`   • falha ao buscar ${gift.name}: ${message}`);
-          if (message.includes("GOOGLE_IMAGE_HTTP_403")) {
-            console.warn("   • Google recusou a API; interrompendo esta sincronização para evitar chamadas repetidas.");
-            break;
-          }
-        }
-        await new Promise(resolve => setTimeout(resolve, 160));
-      }
-
-      console.log(`🖼️  Imagens: ${synced} atualizadas; ${failed} sem atualização.`);
-    }
-  } else {
-    console.log("🖼️  Google CSE não configurado; sincronização automática de imagens ignorada.");
   }
 
   const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
