@@ -78,3 +78,10 @@
   .photo-actions{padding:8px;gap:6px}
   .photo-actions .btn{padding:7px 8px;font-size:.75rem}
 }
+
+.gifts-page{position:relative;overflow:hidden;background:radial-gradient(circle at 4% 4%,rgba(223,103,49,.09),transparent 17%),radial-gradient(circle at 96% 6%,rgba(207,70,123,.08),transparent 19%),var(--bg)}
+.gifts-page>.container{position:relative;z-index:2}
+.gifts-page>.romantic-scene{height:390px;bottom:auto;opacity:.52}
+.gifts-page .hummingbird-left{width:105px;left:1.5%;top:35px}
+.gifts-page .hummingbird-right{width:80px;right:2%;top:115px}
+.gifts-page .floral-left,.gifts-page .floral-right{width:115px;bottom:-10px;opacity:.62}
