@@ -1,4 +1,147 @@
-"use client";import{useEffect,useState}from"react";
-type C={id:string;name:string};type Color={id:string;name:string;hex:string|null};
-const empty={id:"",name:"",description:"",categoryId:"",imageUrl:"",approximateValue:"",priority:"NORMAL",desiredQuantity:1,brand:"",model:"",note:"",purchaseUrl:"",active:true,spotlight:false,acceptsInstallments:false,installmentCount:"",installmentValue:"",sortOrder:0,colorIds:[] as string[]};
-export function AdminGifts(){const[data,setData]=useState<{gifts:any[];categories:C[];colors:Color[]}>({gifts:[],categories:[],colors:[]});const[f,setF]=useState<any>(empty);const[open,setOpen]=useState(false);const[msg,setMsg]=useState("");async function load(){const r=await fetch("/api/admin/gifts");if(r.ok)setData(await r.json())}useEffect(()=>{load()},[]);function edit(g:any){setF({...empty,...g,approximateValue:g.approximateValue??"",colorIds:g.colors.map((x:any)=>x.color.id)});setOpen(true)}function add(){setF({...empty,categoryId:data.categories[0]?.id||"",sortOrder:data.gifts.length});setOpen(true)}async function save(e:React.FormEvent){e.preventDefault();setMsg("");const method=f.id?"PATCH":"POST";const url=f.id?`/api/admin/gifts/${f.id}`:"/api/admin/gifts";const r=await fetch(url,{method,headers:{"content-type":"application/json"},body:JSON.stringify({...f,approximateValue:f.approximateValue===""?null:Number(f.approximateValue)})});const j=await r.json();if(!r.ok)return setMsg(j.error||"Erro ao salvar");setOpen(false);await load()}async function del(id:string){if(!confirm("Excluir/arquivar este presente?"))return;const r=await fetch(`/api/admin/gifts/${id}`,{method:"DELETE"});if(!r.ok)alert("Não foi possível excluir.");await load()}function duplicate(g:any){setF({...empty,...g,id:"",name:`${g.name} (cópia)`,reservedQuantity:0,approximateValue:g.approximateValue??"",colorIds:g.colors.map((x:any)=>x.color.id)});setOpen(true)}return <div><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}><div><div className="eyebrow">Gerenciamento</div><h1 className="subtitle">Presentes</h1></div><button className="btn btn-primary" onClick={add}>Adicionar presente</button></div><div className="table-wrap"><table className="table"><thead><tr><th>Presente</th><th>Categoria</th><th>Qtd.</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody>{data.gifts.map(g=><tr key={g.id}><td><strong>{g.name}</strong></td><td>{g.category.name}</td><td>{g.reservedQuantity}/{g.desiredQuantity}</td><td>{g.approximateValue??"—"}</td><td>{g.active?"Ativo":"Arquivado"}</td><td><div style={{display:"flex",gap:6}}><button className="btn" onClick={()=>edit(g)}>Editar</button><button className="btn" onClick={()=>duplicate(g)}>Duplicar</button><button className="btn btn-danger" onClick={()=>del(g.id)}>Excluir</button></div></td></tr>)}</tbody></table></div>{open&&<div className="modal-backdrop"><div className="modal"><button onClick={()=>setOpen(false)} style={{float:"right",border:0,background:"transparent",fontSize:24}}>×</button><h2 className="subtitle">{f.id?"Editar presente":"Novo presente"}</h2><form className="form" onSubmit={save}><div className="field"><label>Nome *</label><input className="input" required value={f.name} onChange={e=>setF({...f,name:e.target.value})}/></div><div className="field"><label>Categoria *</label><select className="select" required value={f.categoryId} onChange={e=>setF({...f,categoryId:e.target.value})}>{data.categories.map(c=><option value={c.id} key={c.id}>{c.name}</option>)}</select></div><div className="field"><label>Descrição</label><textarea className="textarea" value={f.description||""} onChange={e=>setF({...f,description:e.target.value})}/></div><div className="form-row"><div className="field"><label>Quantidade desejada</label><input className="input" type="number" min="1" value={f.desiredQuantity} onChange={e=>setF({...f,desiredQuantity:Number(e.target.value)})}/></div><div className="field"><label>Valor aproximado (opcional)</label><input className="input" type="number" step="0.01" min="0" value={f.approximateValue??""} onChange={e=>setF({...f,approximateValue:e.target.value})}/></div></div><div className="form-row"><div className="field"><label>Prioridade</label><select className="select" value={f.priority} onChange={e=>setF({...f,priority:e.target.value})}><option value="HIGH">Alta</option><option value="NORMAL">Normal</option><option value="OPTIONAL">Opcional</option></select></div><div className="field"><label>Ordem</label><input className="input" type="number" value={f.sortOrder} onChange={e=>setF({...f,sortOrder:Number(e.target.value)})}/></div></div><div className="field"><label>Imagem (URL)</label><input className="input" value={f.imageUrl||""} onChange={e=>setF({...f,imageUrl:e.target.value})}/></div><div className="form-row"><div className="field"><label>Marca sugerida</label><input className="input" value={f.brand||""} onChange={e=>setF({...f,brand:e.target.value})}/></div><div className="field"><label>Modelo sugerido</label><input className="input" value={f.model||""} onChange={e=>setF({...f,model:e.target.value})}/></div></div><div className="field"><label>Link de compra</label><input className="input" value={f.purchaseUrl||""} onChange={e=>setF({...f,purchaseUrl:e.target.value})}/></div><div className="field"><label>Observação</label><textarea className="textarea" value={f.note||""} onChange={e=>setF({...f,note:e.target.value})}/></div><div className="field"><label>Cores aceitas</label><div className="color-row">{data.colors.map(c=><label key={c.id} className="checkline"><input type="checkbox" checked={f.colorIds.includes(c.id)} onChange={e=>setF({...f,colorIds:e.target.checked?[...f.colorIds,c.id]:f.colorIds.filter((x:string)=>x!==c.id)})}/><span className="dot" style={{background:c.hex||"#eee"}}/> {c.name}</label>)}</div></div><label className="checkline"><input type="checkbox" checked={f.active} onChange={e=>setF({...f,active:e.target.checked})}/> Ativo</label><label className="checkline"><input type="checkbox" checked={f.spotlight} onChange={e=>setF({...f,spotlight:e.target.checked})}/> Destaque</label><label className="checkline"><input type="checkbox" checked={f.acceptsInstallments} onChange={e=>setF({...f,acceptsInstallments:e.target.checked})}/> Aceita cotas</label>{f.acceptsInstallments&&<div className="form-row"><div className="field"><label>Número de cotas</label><input className="input" type="number" min="1" value={f.installmentCount||""} onChange={e=>setF({...f,installmentCount:Number(e.target.value)})}/></div><div className="field"><label>Valor de cada cota</label><input className="input" type="number" step="0.01" min="0" value={f.installmentValue||""} onChange={e=>setF({...f,installmentValue:e.target.value})}/></div></div>}{msg&&<div className="notice error">{msg}</div>}<button className="btn btn-primary">Salvar presente</button></form></div></div>}</div>}
+"use client";
+import { useEffect, useState } from "react";
+
+type C={id:string;name:string};
+type Color={id:string;name:string;hex:string|null};
+
+const empty={
+  id:"",name:"",description:"",categoryId:"",imageUrl:"",approximateValue:"",
+  priority:"NORMAL",desiredQuantity:1,brand:"",model:"",note:"",purchaseUrl:"",
+  active:true,spotlight:false,acceptsInstallments:false,installmentCount:"",
+  installmentValue:"",sortOrder:0,colorIds:[] as string[]
+};
+
+export function AdminGifts(){
+  const [data,setData]=useState<{gifts:any[];categories:C[];colors:Color[]}>({gifts:[],categories:[],colors:[]});
+  const [f,setF]=useState<any>(empty);
+  const [open,setOpen]=useState(false);
+  const [msg,setMsg]=useState("");
+  const [imageMsg,setImageMsg]=useState("");
+  const [imagesBusy,setImagesBusy]=useState(false);
+
+  async function load(){
+    const r=await fetch("/api/admin/gifts");
+    if(r.ok)setData(await r.json());
+  }
+  useEffect(()=>{load()},[]);
+
+  function edit(g:any){
+    setF({...empty,...g,approximateValue:g.approximateValue??"",colorIds:g.colors.map((x:any)=>x.color.id)});
+    setOpen(true);
+  }
+  function add(){
+    setF({...empty,categoryId:data.categories[0]?.id||"",sortOrder:data.gifts.length});
+    setOpen(true);
+  }
+  async function save(e:React.FormEvent){
+    e.preventDefault();
+    setMsg("");
+    const method=f.id?"PATCH":"POST";
+    const url=f.id?`/api/admin/gifts/${f.id}`:"/api/admin/gifts";
+    const r=await fetch(url,{
+      method,
+      headers:{"content-type":"application/json"},
+      body:JSON.stringify({...f,approximateValue:f.approximateValue===""?null:Number(f.approximateValue)})
+    });
+    const j=await r.json();
+    if(!r.ok)return setMsg(j.error||"Erro ao salvar");
+    setOpen(false);
+    await load();
+  }
+  async function del(id:string){
+    if(!confirm("Excluir/arquivar este presente?"))return;
+    const r=await fetch(`/api/admin/gifts/${id}`,{method:"DELETE"});
+    if(!r.ok)alert("Não foi possível excluir.");
+    await load();
+  }
+  function duplicate(g:any){
+    setF({...empty,...g,id:"",name:`${g.name} (cópia)`,reservedQuantity:0,approximateValue:g.approximateValue??"",colorIds:g.colors.map((x:any)=>x.color.id)});
+    setOpen(true);
+  }
+  async function syncImages(){
+    setImagesBusy(true);
+    setImageMsg("");
+    try{
+      const r=await fetch("/api/admin/gifts/images",{
+        method:"POST",
+        headers:{"content-type":"application/json"},
+        body:JSON.stringify({onlyMissing:true})
+      });
+      const j=await r.json();
+      if(!r.ok){
+        setImageMsg(j.error||"Não foi possível buscar as imagens.");
+        return;
+      }
+      setImageMsg(j.message||"Imagens atualizadas.");
+      await load();
+    }finally{
+      setImagesBusy(false);
+    }
+  }
+
+  return <div>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+      <div><div className="eyebrow">Gerenciamento</div><h1 className="subtitle">Presentes</h1></div>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+        <button className="btn" onClick={syncImages} disabled={imagesBusy}>{imagesBusy?"Buscando imagens...":"Buscar imagens no Google"}</button>
+        <button className="btn btn-primary" onClick={add}>Adicionar presente</button>
+      </div>
+    </div>
+    <p className="image-sync-note">A busca usa a Google Custom Search API e preenche apenas presentes ainda sem imagem.</p>
+    {imageMsg&&<div className={`notice ${imageMsg.includes("faltam")?"error":"success"}`} style={{marginBottom:14}}>{imageMsg}</div>}
+
+    <div className="table-wrap">
+      <table className="table">
+        <thead><tr><th>Presente</th><th>Categoria</th><th>Qtd.</th><th>Valor</th><th>Imagem</th><th>Status</th><th>Ações</th></tr></thead>
+        <tbody>{data.gifts.map(g=><tr key={g.id}>
+          <td><strong>{g.name}</strong></td>
+          <td>{g.category.name}</td>
+          <td>{g.reservedQuantity}/{g.desiredQuantity}</td>
+          <td>{g.approximateValue??"—"}</td>
+          <td>{g.imageUrl?"✓":"—"}</td>
+          <td>{g.active?"Ativo":"Arquivado"}</td>
+          <td><div style={{display:"flex",gap:6}}>
+            <button className="btn" onClick={()=>edit(g)}>Editar</button>
+            <button className="btn" onClick={()=>duplicate(g)}>Duplicar</button>
+            <button className="btn btn-danger" onClick={()=>del(g.id)}>Excluir</button>
+          </div></td>
+        </tr>)}</tbody>
+      </table>
+    </div>
+
+    {open&&<div className="modal-backdrop"><div className="modal">
+      <button onClick={()=>setOpen(false)} style={{float:"right",border:0,background:"transparent",fontSize:24}}>×</button>
+      <h2 className="subtitle">{f.id?"Editar presente":"Novo presente"}</h2>
+      <form className="form" onSubmit={save}>
+        <div className="field"><label>Nome *</label><input className="input" required value={f.name} onChange={e=>setF({...f,name:e.target.value})}/></div>
+        <div className="field"><label>Categoria *</label><select className="select" required value={f.categoryId} onChange={e=>setF({...f,categoryId:e.target.value})}>{data.categories.map(c=><option value={c.id} key={c.id}>{c.name}</option>)}</select></div>
+        <div className="field"><label>Descrição</label><textarea className="textarea" value={f.description||""} onChange={e=>setF({...f,description:e.target.value})}/></div>
+        <div className="form-row">
+          <div className="field"><label>Quantidade desejada</label><input className="input" type="number" min="1" value={f.desiredQuantity} onChange={e=>setF({...f,desiredQuantity:Number(e.target.value)})}/></div>
+          <div className="field"><label>Valor aproximado (opcional)</label><input className="input" type="number" step="0.01" min="0" value={f.approximateValue??""} onChange={e=>setF({...f,approximateValue:e.target.value})}/></div>
+        </div>
+        <div className="form-row">
+          <div className="field"><label>Prioridade</label><select className="select" value={f.priority} onChange={e=>setF({...f,priority:e.target.value})}><option value="HIGH">Alta</option><option value="NORMAL">Normal</option><option value="OPTIONAL">Opcional</option></select></div>
+          <div className="field"><label>Ordem</label><input className="input" type="number" value={f.sortOrder} onChange={e=>setF({...f,sortOrder:Number(e.target.value)})}/></div>
+        </div>
+        <div className="field"><label>Imagem (URL)</label><input className="input" value={f.imageUrl||""} onChange={e=>setF({...f,imageUrl:e.target.value})}/></div>
+        <div className="form-row">
+          <div className="field"><label>Marca sugerida</label><input className="input" value={f.brand||""} onChange={e=>setF({...f,brand:e.target.value})}/></div>
+          <div className="field"><label>Modelo sugerido</label><input className="input" value={f.model||""} onChange={e=>setF({...f,model:e.target.value})}/></div>
+        </div>
+        <div className="field"><label>Link de compra</label><input className="input" value={f.purchaseUrl||""} onChange={e=>setF({...f,purchaseUrl:e.target.value})}/></div>
+        <div className="field"><label>Observação</label><textarea className="textarea" value={f.note||""} onChange={e=>setF({...f,note:e.target.value})}/></div>
+        <div className="field"><label>Cores aceitas</label><div className="color-row">{data.colors.map(c=><label key={c.id} className="checkline"><input type="checkbox" checked={f.colorIds.includes(c.id)} onChange={e=>setF({...f,colorIds:e.target.checked?[...f.colorIds,c.id]:f.colorIds.filter((x:string)=>x!==c.id)})}/><span className="dot" style={{background:c.hex||"#eee"}}/> {c.name}</label>)}</div></div>
+        <label className="checkline"><input type="checkbox" checked={f.active} onChange={e=>setF({...f,active:e.target.checked})}/> Ativo</label>
+        <label className="checkline"><input type="checkbox" checked={f.spotlight} onChange={e=>setF({...f,spotlight:e.target.checked})}/> Destaque</label>
+        <label className="checkline"><input type="checkbox" checked={f.acceptsInstallments} onChange={e=>setF({...f,acceptsInstallments:e.target.checked})}/> Aceita cotas</label>
+        {f.acceptsInstallments&&<div className="form-row">
+          <div className="field"><label>Número de cotas</label><input className="input" type="number" min="1" value={f.installmentCount||""} onChange={e=>setF({...f,installmentCount:Number(e.target.value)})}/></div>
+          <div className="field"><label>Valor de cada cota</label><input className="input" type="number" step="0.01" min="0" value={f.installmentValue||""} onChange={e=>setF({...f,installmentValue:e.target.value})}/></div>
+        </div>}
+        {msg&&<div className="notice error">{msg}</div>}
+        <button className="btn btn-primary">Salvar presente</button>
+      </form>
+    </div></div>}
+  </div>;
+}
