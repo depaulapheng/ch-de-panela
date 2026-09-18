@@ -24,20 +24,48 @@ const colorSeed = [
   ["Bege", "#D8C8AE"], ["Bambu", "#C79D63"], ["Sem preferência", null]
 ] as const;
 
+const storyText = "Antes mesmo de conhecer a Larissa de verdade, eu já era próximo da família dela, pois nossas mães são amigas de infância. Inclusive, cheguei a ir à festa de 15 anos dela com OUTRA NAMORADA — quem diria onde essa história iria parar?\n\nAnos depois, uma interação no Instagram virou conversa e decidimos sair pela primeira vez. A Larissa nem estava muito animada, mas sua amiga de faculdade, Allice, convenceu ela a ir. Ainda bem.\n\nDepois daquele encontro, não desgrudamos mais. Com dois meses já estávamos namorando e, três anos depois, fiz o pedido de casamento, porque já não consigo imaginar minha vida sem ela.\n\nAlém de minha noiva, a Larissa é minha melhor amiga e companheira para tudo: de comer hambúrguer, jogar UNO e assistir aos jogos do Cruzeiro até dividir planos, sonhos e a vida. E é com ela que quero continuar vivendo todos os próximos capítulos da nossa história.";
+
+async function ensureEventSettings() {
+  const current = await prisma.eventSettings.findUnique({ where: { id: "main" } });
+  const desired = {
+    coupleName: "Larissa & Pedro",
+    showerDate: new Date("2026-11-21T19:00:00-03:00"),
+    weddingDate: new Date("2027-03-20T15:00:00-03:00"),
+    showerTime: "19h",
+    venue: "Salão de Festas do Condomínio Reserva Real",
+    address: "Próximo ao Acamari - Viçosa/MG",
+    homeText: "Escolhemos algumas coisinhas para deixar nossa casa ainda mais especial. Fique à vontade para escolher o presente que mais combinar com você. 💛",
+    guestMessage: "Nosso grande dia está chegando e queremos celebrar essa nova fase ao lado de pessoas especiais.",
+    storyText,
+    seoTitle: "Chá de Panela | Larissa & Pedro",
+    seoDescription: "Chá de Panela de Larissa & Pedro — 21 de novembro de 2026."
+  };
+
+  if (!current) {
+    await prisma.eventSettings.create({ data: { id: "main", ...desired } });
+    return;
+  }
+
+  const update: Record<string, unknown> = {};
+  if (current.coupleName === "Pedro & Larissa") update.coupleName = desired.coupleName;
+  if (!current.showerTime || current.showerTime === "A confirmar") update.showerTime = desired.showerTime;
+  if (!current.venue) update.venue = desired.venue;
+  if (!current.address) update.address = desired.address;
+  if (current.storyText.startsWith("Este espaço é editável")) update.storyText = desired.storyText;
+  if (current.seoTitle.includes("Pedro & Larissa")) update.seoTitle = desired.seoTitle;
+  if (current.seoDescription.includes("Pedro & Larissa")) update.seoDescription = desired.seoDescription;
+
+  const oldShower = new Date("2026-11-21T15:00:00-03:00").getTime();
+  if (Math.abs(current.showerDate.getTime() - oldShower) < 60_000) update.showerDate = desired.showerDate;
+
+  if (Object.keys(update).length) {
+    await prisma.eventSettings.update({ where: { id: "main" }, data: update });
+  }
+}
+
 async function main() {
-  await prisma.eventSettings.upsert({
-    where: { id: "main" },
-    update: {},
-    create: {
-      id: "main",
-      coupleName: "Pedro & Larissa",
-      showerDate: new Date("2026-11-21T15:00:00-03:00"),
-      weddingDate: new Date("2027-03-20T15:00:00-03:00"),
-      homeText: "Escolhemos algumas coisinhas para deixar nossa casa ainda mais especial. Fique à vontade para escolher o presente que mais combinar com você. 💛",
-      guestMessage: "Nosso grande dia está chegando e queremos celebrar essa nova fase ao lado de pessoas especiais.",
-      storyText: "Este espaço é editável no painel administrativo para Pedro e Larissa contarem um pouco da história deles."
-    }
-  });
+  await ensureEventSettings();
 
   const categories: Record<string, string> = {};
   let ci = 0;
@@ -54,7 +82,11 @@ async function main() {
 
   for (let i = 0; i < colorSeed.length; i++) {
     const [name, hex] = colorSeed[i];
-    await prisma.color.upsert({ where: { name }, update: { hex, sortOrder: i }, create: { name, hex, sortOrder: i } });
+    await prisma.color.upsert({
+      where: { name },
+      update: { hex, sortOrder: i },
+      create: { name, hex, sortOrder: i }
+    });
   }
 
   let order = 0;
