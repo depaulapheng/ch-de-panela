@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { Countdown } from "@/components/Countdown";
 import { GiftCard } from "@/components/GiftCard";
+import { DecorativeBirds } from "@/components/DecorativeBirds";
 import { serialize } from "@/lib/utils";
 
 export default async function Home(){
@@ -21,6 +22,7 @@ export default async function Home(){
 
   return <main>
     <section className="hero">
+      <DecorativeBirds/>
       <div className="container">
         <div className="eyebrow">Chá de Panela · 21 de novembro de 2026</div>
         <div className="hero-names">Larissa<br/><span className="hero-amp">&</span><br/>Pedro</div>
@@ -63,7 +65,8 @@ export default async function Home(){
       </div>
     </section>
 
-    <section className="section">
+    <section className="section story-section">
+      <div className="story-accent" aria-hidden="true">✦</div>
       <div className="container grid grid-2">
         <div>
           <div className="eyebrow">Larissa & Pedro</div>
