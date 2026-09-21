@@ -7,10 +7,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Priority { HIGH NORMAL OPTIONAL }
-enum ReservationStatus { RESERVED CANCELLED DELIVERED }
-enum MessageStatus { PENDING APPROVED HIDDEN }
-enum InstallmentStatus { AVAILABLE RESERVED CANCELLED }
+enum Priority {
+  HIGH
+  NORMAL
+  OPTIONAL
+}
+
+enum ReservationStatus {
+  RESERVED
+  CANCELLED
+  DELIVERED
+}
+
+enum MessageStatus {
+  PENDING
+  APPROVED
+  HIDDEN
+}
+
+enum InstallmentStatus {
+  AVAILABLE
+  RESERVED
+  CANCELLED
+}
 
 model Admin {
   id           String     @id @default(cuid())
