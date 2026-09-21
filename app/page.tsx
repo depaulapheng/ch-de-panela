@@ -23,7 +23,7 @@ export default async function Home(){
   return <main>
     <section className="hero">
       <DecorativeBirds/>
-      <div className="container">
+      <div className="container section-heading">
         <div className="eyebrow">Chá de Panela · 21 de novembro de 2026</div>
         <div className="hero-names">Larissa<br/><span className="hero-amp">&</span><br/>Pedro</div>
         <p className="hero-copy">{s?.guestMessage}</p>
@@ -44,20 +44,20 @@ export default async function Home(){
     </section>
 
     <section id="evento" className="section">
-      <div className="container">
+      <div className="container section-heading">
         <div className="eyebrow">Nosso Chá de Panela</div>
         <h2 className="title">Um encontro para celebrar a nossa nova casa.</h2>
         <div className="grid grid-3">
-          <div className="card info-card"><div className="eyebrow">Data</div><h3 className="serif">21 de novembro de 2026</h3></div>
-          <div className="card info-card"><div className="eyebrow">Horário</div><h3 className="serif">{s?.showerTime||"19h"}</h3></div>
-          <div className="card info-card"><div className="eyebrow">Local</div><h3 className="serif">{s?.venue||"Salão de Festas do Condomínio Reserva Real"}</h3><p className="muted">{s?.address||"Próximo ao Acamari - Viçosa/MG"}</p>{s?.mapsUrl&&<a className="btn" target="_blank" href={s.mapsUrl}>Como chegar</a>}</div>
+          <div className="card info-card event-card"><div className="eyebrow">Data</div><h3>21 de novembro de 2026</h3></div>
+          <div className="card info-card event-card"><div className="eyebrow">Horário</div><h3>{s?.showerTime||"19h"}</h3></div>
+          <div className="card info-card event-card"><div className="eyebrow">Local</div><h3>{s?.venue||"Salão de Festas do Condomínio Reserva Real"}</h3><p className="muted">{s?.address||"Próximo ao Acamari - Viçosa/MG"}</p>{s?.mapsUrl&&<a className="btn" target="_blank" href={s.mapsUrl}>Como chegar</a>}</div>
         </div>
       </div>
     </section>
 
     <section className="section gifts-band">
       <div className="container">
-        <div style={{display:"flex",justifyContent:"space-between",gap:18,alignItems:"end",flexWrap:"wrap"}}>
+        <div className="section-heading gifts-heading">
           <div><div className="eyebrow">Lista real</div><h2 className="title">Presentes para a nossa casa</h2></div>
           <Link className="btn" href="/presentes">Ver todos</Link>
         </div>
