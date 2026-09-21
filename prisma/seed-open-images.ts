@@ -173,7 +173,7 @@ async function findCommonsImage(name:string){
 }
 
 async function main(){
-  const gifts=await prisma.gift.findMany({
+  for(const [name,image] of Object.entries(manualImages)){    await prisma.gift.updateMany({where:{name,active:true},data:image});  }  const gifts=await prisma.gift.findMany({
     where:{active:true,imageUrl:null},
     select:{id:true,name:true},
     orderBy:{sortOrder:"asc"}
