@@ -1,6 +1,18 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";const prisma = new PrismaClient();
 
-const prisma = new PrismaClient();
+const manualImages: Record<string, {
+  imageUrl: string;
+  imageCredit: string | null;
+  imageLicense: string | null;
+  imageSourceUrl: string;
+}> = {
+  "Pegador de macarrão": {
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Goodcook_Grey_Spaghetti_Spoon_%2853504577283%29.jpg/960px-Goodcook_Grey_Spaghetti_Spoon_%2853504577283%29.jpg",
+    imageCredit: null,
+    imageLicense: null,
+    imageSourceUrl: "https://commons.wikimedia.org/wiki/File:Goodcook_Grey_Spaghetti_Spoon_(53504577283).jpg"
+  }
+};
 
 const terms: Record<string,string> = {
   "Jogo de colheres de silicone":"silicone kitchen utensils",
@@ -173,7 +185,7 @@ async function main(){
 
   for(const gift of gifts){
     try{
-      const found=(await findOpenverseImage(gift.name)) || (await findCommonsImage(gift.name));
+      const found=manualImages[gift.name] || (await findOpenverseImage(gift.name)) || (await findCommonsImage(gift.name));
       if(found?.imageUrl){
         await prisma.gift.update({where:{id:gift.id},data:found});
         synced++;
