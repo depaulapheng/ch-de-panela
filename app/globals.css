@@ -130,3 +130,8 @@ body { font-family: var(--body); line-height: 1.65; }
   .title { font-size: clamp(2.6rem, 13vw, 4rem); }
   .subtitle { font-size: clamp(2rem, 10vw, 3rem); }
 }
+
+/* Fallback visual permanece visível sob imagens externas que falharem. */
+.gift-img::after{content:"Imagem em atualização";position:absolute;inset:0;display:grid;place-items:center;padding:20px;text-align:center;font-family:var(--display);font-size:1.35rem;font-weight:600;color:var(--fuchsia-dark);background:linear-gradient(135deg,#fff2eb,#fff7f7);z-index:0}
+.gift-img img{position:relative;z-index:1;font-size:0;color:transparent;background:transparent}
+.gift-img .image-credit{z-index:2}
