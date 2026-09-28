@@ -37,7 +37,7 @@ a,button,input,textarea,select{transition:color .18s ease,background-color .18s 
 .title,.subtitle,.serif,.brand,.hero-names,.gift-name,.count-num,.stat strong{font-family:var(--display);color:inherit}
 .title{font-size:clamp(2.6rem,5.2vw,4.65rem);line-height:1.05;font-weight:600;letter-spacing:-.025em}
 .subtitle{font-size:clamp(2.2rem,4.2vw,3.35rem);line-height:1.11;font-weight:600}
-.eyebrow{font-family:var(--body);letter-spacing:.18em;font-size:.68rem;font-weight:700;color:var(--primary);line-height:1.5}
+.eyebrow{font-family:var(--body);letter-spacing:.18em;font-size:.68rem;font-weight:700;color:var(--primary-hover);line-height:1.5}
 .muted{color:var(--muted)}
 .nav{background:rgba(255,250,248,.97);border-bottom:1px solid var(--border);box-shadow:0 3px 18px rgba(79,37,45,.035)}
 .nav-inner{min-height:72px;gap:22px}
@@ -109,7 +109,7 @@ a,button,input,textarea,select{transition:color .18s ease,background-color .18s 
 .photo-card{border-color:var(--border)}
 .wedding-band{background:#38252e;color:#fffaf7}
 .wedding-eyebrow{color:#f2ad75!important}
-.faq summary:hover{color:var(--primary)}
+.faq summary:hover{color:var(--primary-hover)}
 .guest-quote{border-left-color:var(--palette-pink)}
 .image-credit{border-radius:5px;background:rgba(44,34,28,.75);opacity:.94}
 .footer{background:var(--surface);border-top-color:var(--border)}
@@ -131,12 +131,12 @@ a,button,input,textarea,select{transition:color .18s ease,background-color .18s 
  .nav-links{gap:11px}
 }
 @media(max-width:600px){
- html{scroll-padding-top:128px}
+ html{scroll-padding-top:155px}
  .container{width:calc(100% - 30px)}
  .nav-inner{min-height:0;padding:10px 0 9px;display:flex;flex-direction:column;align-items:center;gap:9px}
  .brand{font-size:1.7rem}
- .nav-links{width:100%;display:flex;gap:12px;flex-wrap:nowrap;justify-content:flex-start;align-items:center;overflow-x:auto;padding:1px 0 4px;scrollbar-width:thin;white-space:nowrap}
- .nav .nav-links a{display:inline-flex!important;flex:0 0 auto;font-size:.75rem}
+ .nav-links{width:100%;display:flex;gap:7px 12px;flex-wrap:wrap;justify-content:center;align-items:center;overflow-x:visible;padding:1px 0 4px;white-space:normal}
+ .nav .nav-links a{display:inline-flex!important;flex:0 0 auto;font-size:.75rem;min-height:32px;align-items:center}
  .nav .nav-links .btn{width:auto;min-height:37px;padding:8px 11px}
  .section{padding:52px 0}
  .title{font-size:clamp(2.65rem,11vw,3.8rem)}
@@ -165,4 +165,4 @@ a,button,input,textarea,select{transition:color .18s ease,background-color .18s 
 /* A faixa em degradê aparece como detalhe, sem prejudicar a leitura dos cards. */
 .gifts-heading::after{content:"";display:block;width:76px;height:3px;border-radius:99px;background:var(--palette-gradient);margin:8px auto 0}
 :where(.btn,.nav-links a,.input,.select,.textarea):focus-visible{outline:3px solid var(--focus);outline-offset:3px}
-@media(max-width:600px){.nav-links{scrollbar-color:var(--palette-pink) transparent}.gift-img img{padding:10px}.gift-body{overflow-wrap:anywhere}}
+@media(max-width:600px){.gift-img img{padding:10px}.gift-body{overflow-wrap:anywhere}}
