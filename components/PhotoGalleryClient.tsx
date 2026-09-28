@@ -2,161 +2,100 @@
 
 import { DragEvent, useEffect, useMemo, useState } from "react";
 
-type Photo = {
-  public_id:string;
-  version:number;
-  format:string;
-  width?:number;
-  height?:number;
-  created_at?:string;
-  secure_url?:string;
-};
+type Photo = { id: string; fileName: string; mimeType: string; size: number; createdAt: string };
 
-function cloudinaryUrl(cloudName:string, photo:Photo){
-  if(photo.secure_url) return photo.secure_url;
-  return `https://res.cloudinary.com/${cloudName}/image/upload/v${photo.version}/${photo.public_id}.${photo.format}`;
-}
+export function PhotoGalleryClient() {
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [message, setMessage] = useState("");
 
-function downloadUrl(url:string){
-  return url.includes("/image/upload/")
-    ? url.replace("/image/upload/","/image/upload/fl_attachment/")
-    : url;
-}
-
-export function PhotoGalleryClient({
-  cloudName,
-  uploadPreset
-}:{
-  cloudName:string;
-  uploadPreset:string;
-}){
-  const configured=Boolean(cloudName&&uploadPreset);
-  const [photos,setPhotos]=useState<Photo[]>([]);
-  const [files,setFiles]=useState<File[]>([]);
-  const [loading,setLoading]=useState(configured);
-  const [uploading,setUploading]=useState(false);
-  const [message,setMessage]=useState("");
-
-  function chooseFiles(selected:File[]){
-    const images=selected.filter(file=>file.type.startsWith("image/")).slice(0,10);
+  function chooseFiles(selected: File[]) {
+    const images = selected.filter(file => file.type.startsWith("image/")).slice(0, 10);
     setFiles(images);
-    setMessage(selected.length>10?"Selecionei as 10 primeiras fotos deste envio.":"");
+    setMessage(selected.length > 10 ? "Selecionamos as 10 primeiras fotos deste envio." : "");
   }
 
-  function drop(event:DragEvent<HTMLLabelElement>){
+  function drop(event: DragEvent<HTMLLabelElement>) {
     event.preventDefault();
     chooseFiles(Array.from(event.dataTransfer.files));
   }
 
-  async function loadPhotos(){
-    if(!configured) return;
+  async function loadPhotos() {
     setLoading(true);
-    try{
-      const res=await fetch("/api/photos",{cache:"no-store"});
-      if(!res.ok) throw new Error("Não foi possível carregar a galeria.");
-      const data=await res.json();
-      setPhotos(data.photos||[]);
-    }catch{
-      setMessage("A galeria ainda está sendo preparada. Tente novamente em instantes.");
-    }finally{
+    try {
+      const response = await fetch("/api/photos", { cache: "no-store" });
+      if (!response.ok) throw new Error();
+      const data = await response.json();
+      setPhotos(data.photos || []);
+    } catch {
+      setMessage("Não foi possível carregar o álbum agora.");
+    } finally {
       setLoading(false);
     }
   }
 
-  useEffect(()=>{loadPhotos();},[]);
+  useEffect(() => { void loadPhotos(); }, []);
+  const preview = useMemo(() => files.map(file => ({ file, url: URL.createObjectURL(file) })), [files]);
 
-  const preview=useMemo(()=>files.map(file=>({file,url:URL.createObjectURL(file)})),[files]);
-
-  async function upload(){
-    if(!configured||!files.length) return;
+  async function upload() {
+    if (!files.length) return;
     setUploading(true);
     setMessage("");
-    try{
-      for(const file of files){
-        if(file.size>12*1024*1024) throw new Error(`${file.name} ultrapassa 12 MB.`);
-        const body=new FormData();
-        body.append("file",file);
-        body.append("upload_preset",uploadPreset);
-        body.append("tags","cha-panela-2026");
-        body.append("folder","cha-panela-2026");
-        const res=await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,{
-          method:"POST",
-          body
-        });
-        if(!res.ok) throw new Error(`Não foi possível enviar ${file.name}.`);
-      }
+    try {
+      const body = new FormData();
+      for (const file of files) body.append("photos", file);
+      const response = await fetch("/api/photos", { method: "POST", body });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Não foi possível enviar as fotos.");
       setFiles([]);
-      setMessage("Fotos enviadas! Elas já estão disponíveis para todo mundo. 💛");
+      setMessage(`${data.count} foto${data.count === 1 ? "" : "s"} enviada${data.count === 1 ? "" : "s"}! Já estão no álbum. 💛`);
       await loadPhotos();
-    }catch(error){
-      setMessage(error instanceof Error?error.message:"Não foi possível enviar as fotos.");
-    }finally{
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Não foi possível enviar as fotos.");
+    } finally {
       setUploading(false);
     }
-  }
-
-  if(!configured){
-    return <div className="card gallery-setup">
-      <div className="gallery-setup-icon">📸</div>
-      <h2 className="subtitle">Nosso álbum está quase pronto</h2>
-      <p className="muted">Em breve, todos poderão enviar, ver e baixar as fotos do Chá de Panela por aqui.</p>
-    </div>;
   }
 
   return <>
     <section className="card photo-upload-card">
       <div>
         <div className="eyebrow">Compartilhe com a gente</div>
-        <h2 className="subtitle">Suba suas fotos do chá 💛</h2>
-        <p className="muted">Escolha até 10 fotos por vez. Assim que o envio terminar, elas aparecem na galeria para todos.</p>
+        <h2 className="subtitle">Envie suas fotos do chá</h2>
+        <p className="muted">Selecione ou arraste até 10 fotos. Elas aparecem no álbum assim que o envio termina.</p>
       </div>
-      <label className="photo-drop" onDragOver={event=>event.preventDefault()} onDrop={drop}>
-        <input
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-          multiple
-          onChange={e=>chooseFiles(Array.from(e.target.files||[]))}
-        />
+      <label className="photo-drop" onDragOver={event => event.preventDefault()} onDrop={drop}>
+        <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple onChange={event => chooseFiles(Array.from(event.target.files || []))} />
+        <span className="photo-drop-icon">＋</span>
         <strong>Escolher ou arrastar fotos</strong>
-        <span>JPG, PNG, WEBP ou HEIC · até 10 por envio · 12 MB por foto</span>
+        <span>JPG, PNG, WEBP ou HEIC · até 10 por envio · 8 MB por foto</span>
       </label>
-      {preview.length>0&&<div className="upload-preview">
-        {preview.map(({file,url})=><div key={file.name+file.lastModified} className="upload-preview-item">
-          <img src={url} alt="Prévia da foto"/>
+      {preview.length > 0 && <div className="upload-preview">
+        {preview.map(({ file, url }) => <div key={file.name + file.lastModified} className="upload-preview-item">
+          <img src={url} alt={`Prévia de ${file.name}`} />
           <span>{file.name}</span>
         </div>)}
       </div>}
-      <button className="btn btn-primary" onClick={upload} disabled={!files.length||uploading}>
-        {uploading?"Enviando fotos…":"Enviar para o álbum"}
-      </button>
-      {message&&<div className={message.includes("enviadas")?"notice success":"notice"}>{message}</div>}
+      <button className="btn btn-primary" onClick={upload} disabled={!files.length || uploading}>{uploading ? "Enviando fotos…" : "Enviar para o álbum"}</button>
+      {message && <div className={message.includes("enviada") ? "notice success" : "notice"}>{message}</div>}
     </section>
 
     <section className="photo-gallery-section">
       <div className="gallery-heading">
-        <div>
-          <div className="eyebrow">Momentos especiais</div>
-          <h2 className="title">Fotos do nosso Chá</h2>
-        </div>
+        <div><div className="eyebrow">Momentos especiais</div><h2 className="title">Fotos do nosso Chá</h2></div>
         <button className="btn" onClick={loadPhotos}>Atualizar galeria</button>
       </div>
-
-      {loading?<div className="card empty">Carregando fotos…</div>:
-        photos.length===0?<div className="card empty">Ainda não há fotos. Depois do chá, este espaço vai ficar cheio de memórias. ✨</div>:
-        <div className="photo-grid">
-          {photos.map(photo=>{
-            const url=cloudinaryUrl(cloudName,photo);
-            return <article className="photo-card" key={photo.public_id}>
-              <a href={url} target="_blank" rel="noreferrer" className="photo-frame">
-                <img src={url} alt="Foto do Chá de Panela de Larissa e Pedro" loading="lazy"/>
-              </a>
-              <div className="photo-actions">
-                <a className="btn btn-soft" href={url} target="_blank" rel="noreferrer">Abrir</a>
-                <a className="btn btn-primary" href={downloadUrl(url)}>Baixar</a>
-              </div>
-            </article>;
-          })}
-        </div>}
+      {loading ? <div className="card empty">Carregando fotos…</div> : photos.length === 0 ? <div className="card empty">Seja a primeira pessoa a enviar uma foto. ✨</div> : <div className="photo-grid">
+        {photos.map((photo, index) => <article className="photo-card" key={photo.id}>
+          <a href={`/api/photos/${photo.id}`} target="_blank" rel="noreferrer" className="photo-frame"><img src={`/api/photos/${photo.id}`} alt={`Foto ${index + 1} do Chá de Panela`} loading="lazy" /></a>
+          <div className="photo-actions">
+            <a className="btn btn-soft" href={`/api/photos/${photo.id}`} target="_blank" rel="noreferrer">Abrir</a>
+            <a className="btn btn-primary" href={`/api/photos/${photo.id}?download=1`}>Baixar</a>
+          </div>
+        </article>)}
+      </div>}
     </section>
   </>;
 }
