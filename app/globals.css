@@ -135,3 +135,28 @@ body { font-family: var(--body); line-height: 1.65; }
 .gift-img::after{content:"Imagem em atualização";position:absolute;inset:0;display:grid;place-items:center;padding:20px;text-align:center;font-family:var(--display);font-size:1.35rem;font-weight:600;color:var(--fuchsia-dark);background:linear-gradient(135deg,#fff2eb,#fff7f7);z-index:0}
 .gift-img img{position:relative;z-index:1;font-size:0;color:transparent;background:transparent}
 .gift-img .image-credit{z-index:2}
+
+
+:root{--orange:#f78806;--fuchsia:#e0258a;--fuchsia-dark:#a91569;--pink:#d86190;--gold:#dc8b51;--teal:#086190;--magenta:#d00bb7;--burnt-orange:#d45025}
+/* Identidade visual do casamento: orquídeas, rosa vivo e laranja. */
+body{background:linear-gradient(180deg,#fffdfb 0%,#fff8f4 100%)}
+.nav{background:rgba(255,253,251,.95);border-bottom-color:rgba(220,139,81,.28)}
+.brand::after{background:linear-gradient(90deg,var(--magenta),var(--orange),var(--burnt-orange))}
+.hero{background:radial-gradient(circle at 4% 12%,rgba(247,136,6,.25),transparent 28%),radial-gradient(circle at 93% 16%,rgba(224,37,138,.19),transparent 27%),radial-gradient(circle at 50% 103%,rgba(216,97,144,.16),transparent 31%),linear-gradient(180deg,#fffdfb 0%,#fff4ee 65%,#fffaf7 100%)}
+.hero-amp,.nav-login-link{color:var(--fuchsia)}
+.btn-primary{background:linear-gradient(135deg,var(--magenta),var(--fuchsia) 42%,var(--orange));box-shadow:0 12px 28px rgba(208,11,183,.17)}
+.btn-primary:hover{background:linear-gradient(135deg,var(--fuchsia-dark),var(--fuchsia),var(--burnt-orange))}
+.gifts-band,.photo-invite-band{background:linear-gradient(115deg,#fff3ec 0%,#fffafb 46%,#fff0f7 100%);border-color:rgba(220,139,81,.3)}
+.gift-card{background:linear-gradient(var(--paper),var(--paper)) padding-box,linear-gradient(90deg,var(--orange),var(--fuchsia),var(--magenta)) border-box}
+.photo-page,.gifts-page{background:radial-gradient(circle at 4% 5%,rgba(247,136,6,.13),transparent 21%),radial-gradient(circle at 96% 8%,rgba(224,37,138,.11),transparent 23%),var(--bg)}
+.photo-drop.is-dragging{border-color:var(--fuchsia);background:#fff0f8;box-shadow:0 0 0 4px rgba(224,37,138,.08)}
+.gift-img::after{content:"Imagem em atualização";position:absolute;inset:0;display:grid;place-items:center;padding:18px;text-align:center;background:linear-gradient(135deg,#fff3ed,#fff0f7);color:var(--fuchsia-dark);font:600 1.25rem/1.2 var(--display);z-index:0}
+.gift-img img{position:relative;z-index:1;background:#fff}
+.gift-img .image-credit{z-index:3}
+.admin-photo-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:18px 0 24px}
+.admin-photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px}
+.admin-photo-card{overflow:hidden}
+.admin-photo-card img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;background:#fff3ed}
+.admin-photo-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px}
+.admin-photo-actions .btn{min-height:38px;padding:8px 10px;font-size:.78rem}
+
