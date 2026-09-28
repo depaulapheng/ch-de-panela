@@ -1,18 +1,7 @@
-"use client";
+type AdminPhoto = { id: string; fileName: string; size: number; createdAt: Date };
 
-import type { AlbumPhoto } from "@/lib/cloudinary";
-import { cloudinaryDownloadUrl, cloudinaryPhotoUrl } from "@/lib/cloudinary";
-
-export function AdminPhotos({ cloudName, photos }: { cloudName: string; photos: AlbumPhoto[] }) {
-  if (!cloudName) {
-    return <div className="card empty">
-      O álbum ainda precisa das configurações do Cloudinary para receber fotos dos convidados.
-    </div>;
-  }
-
-  if (!photos.length) {
-    return <div className="card empty">Nenhuma foto foi enviada até agora.</div>;
-  }
+export function AdminPhotos({ photos }: { photos: AdminPhoto[] }) {
+  if (!photos.length) return <div className="card empty">Nenhuma foto foi enviada até agora.</div>;
 
   return <>
     <div className="admin-photo-toolbar card">
@@ -23,18 +12,15 @@ export function AdminPhotos({ cloudName, photos }: { cloudName: string; photos: 
       <a className="btn btn-primary" href="/api/admin/photos/download">Baixar todas as fotos</a>
     </div>
     <div className="admin-photo-grid">
-      {photos.map((photo, index) => {
-        const url = cloudinaryPhotoUrl(cloudName, photo);
-        return <article className="photo-card" key={photo.public_id}>
-          <a className="photo-frame" href={url} target="_blank" rel="noreferrer">
-            <img src={url} alt={`Foto ${index + 1} do Chá de Panela`} loading="lazy" />
-          </a>
-          <div className="photo-actions">
-            <a className="btn btn-soft" href={url} target="_blank" rel="noreferrer">Abrir</a>
-            <a className="btn btn-primary" href={cloudinaryDownloadUrl(url)}>Baixar</a>
-          </div>
-        </article>;
-      })}
+      {photos.map((photo, index) => <article className="photo-card" key={photo.id}>
+        <a className="photo-frame" href={`/api/photos/${photo.id}`} target="_blank" rel="noreferrer">
+          <img src={`/api/photos/${photo.id}`} alt={`Foto ${index + 1} do Chá de Panela`} loading="lazy" />
+        </a>
+        <div className="photo-actions">
+          <a className="btn btn-soft" href={`/api/photos/${photo.id}`} target="_blank" rel="noreferrer">Abrir</a>
+          <a className="btn btn-primary" href={`/api/photos/${photo.id}?download=1`}>Baixar</a>
+        </div>
+      </article>)}
     </div>
   </>;
 }
