@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { money } from "@/lib/utils";
 import { GiftImage } from "@/components/GiftImage";
@@ -17,6 +17,7 @@ export function GiftList({gifts,categories}:{gifts:Gift[];categories:{id:string;
   const sp=useSearchParams();
   const router=useRouter();
   const [reserveId,setReserveId]=useState(sp.get("reservar"));
+  const modalRef=useRef<HTMLDivElement>(null);
   const [sector,setSector]=useState("all");
   const [form,setForm]=useState({name:"",phone:"",message:"",confirm:false});
   const [busy,setBusy]=useState(false);
@@ -24,6 +25,31 @@ export function GiftList({gifts,categories}:{gifts:Gift[];categories:{id:string;
   const [success,setSuccess]=useState<{token:string;gift:Gift}|null>(null);
 
   const selected=gifts.find(g=>g.id===reserveId)||null;
+  useEffect(()=>{
+    if (!selected) return;
+    const previousOverflow=document.body.style.overflow;
+    document.body.style.overflow="hidden";
+    modalRef.current?.focus();
+    function onKeyDown(e:KeyboardEvent){
+      if(e.key==="Escape"){
+        setReserveId(null);setSuccess(null);setError("");
+        router.replace("/presentes",{scroll:false});
+      }
+      if(e.key!=="Tab" || !modalRef.current) return;
+      const nodes=Array.from(modalRef.current.querySelectorAll<HTMLElement>(
+        'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
+      ));
+      const first=nodes[0],last=nodes[nodes.length-1];
+      if(!first || !last) return;
+      if(e.shiftKey && (document.activeElement===first || document.activeElement===modalRef.current)){
+        e.preventDefault();last.focus();
+      }else if(!e.shiftKey && document.activeElement===last){
+        e.preventDefault();first.focus();
+      }
+    }
+    document.addEventListener("keydown",onKeyDown);
+    return ()=>{document.removeEventListener("keydown",onKeyDown);document.body.style.overflow=previousOverflow;};
+  },[selected,router]);
   const filtered=useMemo(
     ()=>gifts
       .filter(g=>sector==="all"||g.category.slug===sector)
@@ -109,10 +135,10 @@ export function GiftList({gifts,categories}:{gifts:Gift[];categories:{id:string;
     })}</div>:<div className="card empty">Nenhum presente neste setor.</div>}
 
     {selected&&<div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)close()}}>
-      <div className="modal">
+      <div className="modal" ref={modalRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="gift-dialog-title">
         {success?<div>
           <div className="eyebrow">Reserva concluída</div>
-          <h2 className="subtitle">Presente reservado! 🎁</h2>
+          <h2 className="subtitle" id="gift-dialog-title">Presente reservado! 🎁</h2>
           <p>Obrigado, {form.name}. Larissa e Pedro vão ficar muito felizes com seu carinho.</p>
           <div className="notice"><strong>{success.gift.name}</strong></div>
           <p className="muted">Guarde seu link pessoal. É por ele que você poderá cancelar a reserva ou alterar sua mensagem.</p>
@@ -126,12 +152,12 @@ export function GiftList({gifts,categories}:{gifts:Gift[];categories:{id:string;
         </div>:<>
           <button aria-label="Fechar" onClick={close} style={{float:"right",border:0,background:"transparent",fontSize:24}}>×</button>
           <div className="eyebrow">Escolha do presente</div>
-          <h2 className="subtitle">{selected.name}</h2>
+          <h2 className="subtitle" id="gift-dialog-title">{selected.name}</h2>
           {selected.approximateValue!=null&&<p><strong>{money(selected.approximateValue)}</strong> <span className="muted">aprox.</span></p>}
           <form className="form" onSubmit={submit}>
-            <div className="field"><label>Nome *</label><input className="input" required minLength={2} value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/></div>
-            <div className="field"><label>WhatsApp ou telefone *</label><input className="input" required inputMode="tel" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></div>
-            <div className="field"><label>Mensagem para Larissa & Pedro</label><textarea className="textarea" value={form.message} onChange={e=>setForm({...form,message:e.target.value})}/></div>
+            <div className="field"><label htmlFor="gift-guest-name">Nome *</label><input id="gift-guest-name" autoComplete="name" className="input" required minLength={2} value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/></div>
+            <div className="field"><label htmlFor="gift-guest-phone">WhatsApp ou telefone *</label><input id="gift-guest-phone" autoComplete="tel" className="input" required inputMode="tel" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></div>
+            <div className="field"><label htmlFor="gift-guest-message">Mensagem para Larissa & Pedro</label><textarea id="gift-guest-message" className="textarea" value={form.message} onChange={e=>setForm({...form,message:e.target.value})}/></div>
             <label className="checkline"><input type="checkbox" required checked={form.confirm} onChange={e=>setForm({...form,confirm:e.target.checked})}/><span>Confirmo que desejo reservar este item. Se eu não puder comprá-lo depois, usarei meu link pessoal para cancelar a reserva.</span></label>
             {error&&<div className="notice error">{error}</div>}
             <button className="btn btn-primary" disabled={busy}>{busy?"Confirmando...":"Confirmar presente 🎁"}</button>

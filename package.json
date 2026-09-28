@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && vitest run && next build",
     "start": "next start -p ${PORT:-3000}",
     "start:prod": "prisma migrate deploy && prisma db seed && next start -p ${PORT:-3000}",
     "lint": "next lint",

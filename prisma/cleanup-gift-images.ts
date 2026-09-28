@@ -10,7 +10,13 @@ async function main() {
     where: { OR: genericGiftImageBases.map(base => ({ imageUrl: { startsWith: base } })) },
     data: { imageUrl: null, imageCredit: null, imageLicense: null, imageSourceUrl: null }
   });
-  console.log("Imagens genéricas removidas: " + result.count + ". Fotos específicas preservadas.");
+  // This historical mapping points to a decorative antique ladle rather than
+  // the requested contemporary kitchen utensil. Keep other curated images intact.
+  const concha = await prisma.gift.updateMany({
+    where: { name: "Concha", imageUrl: { contains: "Soup%20Ladle%20by%20James%20Walker" } },
+    data: { imageUrl: null, imageCredit: null, imageLicense: null, imageSourceUrl: null }
+  });
+  console.log("Imagens genéricas removidas: " + result.count + "; concha incompatível: " + concha.count + ". Outras fotos preservadas.");
 }
 
 main().finally(() => prisma.$disconnect());

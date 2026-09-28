@@ -36,7 +36,7 @@ function matches(text:string, word:string){
   return text.includes(value) || (value.endsWith("s") && text.includes(value.slice(0,-1)));
 }
 
-function relevant(item:GoogleImageItem, name:string){
+export function isRelevantGoogleProductImage(item:GoogleImageItem, name:string){
   const intent=intents[name];
   const full=normalize([item.title||"",item.snippet||"",item.image?.contextLink||""].join(" "));
   const anchors=intent?.anchors || [name];
@@ -64,5 +64,5 @@ export async function searchGoogleProductImage(name: string): Promise<string|nul
     throw new Error("GOOGLE_IMAGE_HTTP_" + response.status);
   }
   const data=await response.json() as {items?:GoogleImageItem[]};
-  return data.items?.find(item=>relevant(item,name))?.link || null;
+  return data.items?.find(item=>isRelevantGoogleProductImage(item,name))?.link || null;
 }
