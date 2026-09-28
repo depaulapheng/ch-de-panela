@@ -1,4 +1,4 @@
-  imageSourceUrl?: string;
+import { PrismaClient } from "@prisma/client";
 import { giftFallbackBathroom, giftFallbackCleaning, giftFallbackHome, giftFallbackKitchen } from "../lib/generated-images";
 
 const prisma = new PrismaClient();
