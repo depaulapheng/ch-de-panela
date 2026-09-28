@@ -38,3 +38,4 @@ const manualImages: Record<string, {
     imageUrl: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Kitchen-Classic-Can-Opener.jpg?width=960",
     imageCredit: "Evan-Amos",
     imageLicense: "Public domain",
+        imageSourceUrl: "https://commons.wikimedia.org/wiki/File:Kitchen-Classic-Can-Opener.jpg"
