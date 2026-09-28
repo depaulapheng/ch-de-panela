@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { DragEvent, useEffect, useMemo, useState } from "react";
 
 type Photo = {
   public_id:string;
@@ -36,6 +36,17 @@ export function PhotoGalleryClient({
   const [loading,setLoading]=useState(configured);
   const [uploading,setUploading]=useState(false);
   const [message,setMessage]=useState("");
+
+  function chooseFiles(selected:File[]){
+    const images=selected.filter(file=>file.type.startsWith("image/")).slice(0,10);
+    setFiles(images);
+    setMessage(selected.length>10?"Selecionei as 10 primeiras fotos deste envio.":"");
+  }
+
+  function drop(event:DragEvent<HTMLLabelElement>){
+    event.preventDefault();
+    chooseFiles(Array.from(event.dataTransfer.files));
+  }
 
   async function loadPhotos(){
     if(!configured) return;
@@ -99,15 +110,15 @@ export function PhotoGalleryClient({
         <h2 className="subtitle">Suba suas fotos do chá 💛</h2>
         <p className="muted">Escolha até 10 fotos por vez. Assim que o envio terminar, elas aparecem na galeria para todos.</p>
       </div>
-      <label className="photo-drop">
+      <label className="photo-drop" onDragOver={event=>event.preventDefault()} onDrop={drop}>
         <input
           type="file"
           accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
           multiple
-          onChange={e=>setFiles(Array.from(e.target.files||[]).slice(0,10))}
+          onChange={e=>chooseFiles(Array.from(e.target.files||[]))}
         />
-        <strong>Escolher fotos</strong>
-        <span>JPG, PNG, WEBP ou HEIC · até 12 MB por foto</span>
+        <strong>Escolher ou arrastar fotos</strong>
+        <span>JPG, PNG, WEBP ou HEIC · até 10 por envio · 12 MB por foto</span>
       </label>
       {preview.length>0&&<div className="upload-preview">
         {preview.map(({file,url})=><div key={file.name+file.lastModified} className="upload-preview-item">
