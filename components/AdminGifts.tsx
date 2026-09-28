@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import { GiftImage } from "@/components/GiftImage";
+import { isKnownGenericGiftImage } from "@/lib/gift-image-policy";
 
 type C={id:string;name:string};
 type Color={id:string;name:string;hex:string|null};
@@ -87,7 +89,7 @@ export function AdminGifts(){
         <button className="btn btn-primary" onClick={add}>Adicionar presente</button>
       </div>
     </div>
-    <p className="image-sync-note">A busca usa a Google Custom Search API e preenche apenas presentes ainda sem imagem.</p>
+    <p className="image-sync-note">A busca usa a integração Google atual e só aplica resultados relacionados ao nome completo do presente. Revise visualmente os itens abaixo antes de considerar a lista concluída.</p>
     {imageMsg&&<div className={`notice ${imageMsg.includes("faltam")?"error":"success"}`} style={{marginBottom:14}}>{imageMsg}</div>}
 
     <div className="table-wrap">
@@ -98,7 +100,7 @@ export function AdminGifts(){
           <td>{g.category.name}</td>
           <td>{g.reservedQuantity}/{g.desiredQuantity}</td>
           <td>{g.approximateValue??"—"}</td>
-          <td>{g.imageUrl?"✓":"—"}</td>
+          <td><div className="admin-image-preview"><GiftImage src={g.imageUrl} alt={g.name} category={g.category.name}/></div><div className="admin-image-note">{isKnownGenericGiftImage(g.imageUrl)?"Aguardando imagem específica":data.gifts.filter(x=>x.imageUrl&&x.imageUrl===g.imageUrl).length>1?"Imagem repetida — conferir":"Imagem cadastrada — conferir"}</div></td>
           <td>{g.active?"Ativo":"Arquivado"}</td>
           <td><div style={{display:"flex",gap:6}}>
             <button className="btn" onClick={()=>edit(g)}>Editar</button>

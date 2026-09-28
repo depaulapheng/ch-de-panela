@@ -5,7 +5,8 @@ execFileSync("npx", ["tsx", "prisma/seed.ts"], {
   env: process.env
 });
 
-execFileSync("npx", ["tsx", "prisma/seed-open-images.ts"], {
+// Idempotent cleanup: do not run an image search or rewrite curated image URLs at startup.
+execFileSync("npx", ["tsx", "prisma/cleanup-gift-images.ts"], {
   stdio: "inherit",
   env: process.env
 });

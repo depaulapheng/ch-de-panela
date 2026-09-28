@@ -1,18 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import {
-  giftFallbackBathroom,
-  giftFallbackCleaning,
-  giftFallbackHome,
-  giftFallbackKitchen,
-} from "@/lib/generated-images";
+import { isKnownGenericGiftImage } from "@/lib/gift-image-policy";
 
 export function GiftImage({src,alt,category}:{src:string|null;alt:string;category:string}){
-  const [failed,setFailed]=useState(false);
-  const fallback=category==="Limpeza"?giftFallbackCleaning:category==="Banheiro"?giftFallbackBathroom:category==="Quarto & Casa"?giftFallbackHome:giftFallbackKitchen;
-  if(!src||failed){
-    return <img src={fallback} alt={`Composição de presentes de ${category}: referência para ${alt}`} loading="lazy"/>;
+  const [failedUrl,setFailedUrl]=useState<string|null>(null);
+  if (isKnownGenericGiftImage(src) || failedUrl === src) {
+    return <div className="gift-photo-placeholder" role="img" aria-label={"Imagem de " + alt + " em atualização"}>
+      <span className="placeholder-symbol" aria-hidden="true">✳</span>
+      <strong>{alt}</strong>
+      <small>Imagem em atualização</small>
+    </div>;
   }
-  return <img src={src} alt={alt} loading="lazy" referrerPolicy="no-referrer" onError={()=>setFailed(true)}/>;
+  return <img key={src} src={src!} alt={alt + " — " + category} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={()=>setFailedUrl(src)}/>;
 }

@@ -2,6 +2,7 @@
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { money } from "@/lib/utils";
+import { GiftImage } from "@/components/GiftImage";
 
 type Color={id:string;name:string;hex:string|null};
 type Gift={
@@ -85,9 +86,7 @@ export function GiftList({gifts,categories}:{gifts:Gift[];categories:{id:string;
         :g.desiredQuantity-g.reservedQuantity;
       return <article key={g.id} className="card gift-card">
         <div className="gift-img">
-          {g.imageUrl
-            ?<img src={g.imageUrl} alt={g.name} loading="lazy" referrerPolicy="no-referrer"/>
-            :<div className="gift-photo-placeholder"><span>{g.category.name}</span><small>Imagem em atualização</small></div>}
+          <GiftImage src={g.imageUrl} alt={g.name} category={g.category.name}/>
         </div>
         <div className="gift-body">
           <span className="badge">{g.category.name}</span>

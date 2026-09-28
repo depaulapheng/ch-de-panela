@@ -1,9 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 import {
-  giftFallbackBathroom,
-  giftFallbackCleaning,
-  giftFallbackHome,
-  giftFallbackKitchen,
 } from "../lib/generated-images";
 
 const prisma = new PrismaClient();
@@ -62,12 +58,7 @@ const manualImages: Record<string, {
     imageLicense: "CC BY 2.0",
     imageSourceUrl: "https://commons.wikimedia.org/wiki/File:Oven_mitts_-_by_Henry_S%C3%B6derlund_(53394504077).jpg"
   },
-  "Tábua de corte": {
-    imageUrl: giftFallbackKitchen,
-    imageCredit: null,
-    imageLicense: null,
-    imageSourceUrl: "/presentes"
-  }
+
 };
 
 const terms: Record<string,string> = {
@@ -230,7 +221,7 @@ async function findCommonsImage(name:string){
 
 async function main(){
   const gifts=await prisma.gift.findMany({
-    where:{active:true,OR:[{imageUrl:null},{imageUrl:{contains:"api.openverse.org"}},{imageUrl:{contains:"/gift-fallback-"}},{name:{in:Object.keys(manualImages)}}]},
+    where:{active:true,imageUrl:null},
     select:{id:true,name:true,category:{select:{name:true}}},
     orderBy:{sortOrder:"asc"}
   });
@@ -247,10 +238,9 @@ async function main(){
         synced++;
         console.log(`   ✓ ${gift.name}`);
       }else{
-        const fallback=gift.category.name==="Limpeza"?giftFallbackCleaning:gift.category.name==="Banheiro"?giftFallbackBathroom:gift.category.name==="Quarto & Casa"?giftFallbackHome:giftFallbackKitchen;
-        await prisma.gift.update({where:{id:gift.id},data:{imageUrl:fallback,imageCredit:null,imageLicense:null,imageSourceUrl:null}});
+        // Never write an unrelated room photograph into a product field.
         failed++;
-        console.log(`   • foto de apoio aplicada: ${gift.name}`);
+        console.log("   • imagem específica não encontrada: " + gift.name);
       }
     }catch(error){
       failed++;
@@ -258,7 +248,7 @@ async function main(){
     }
     await new Promise(resolve=>setTimeout(resolve,180));
   }
-  console.log(`🌸 Imagens verificadas: ${synced} foto(s) aplicadas; ${failed} com placeholder seguro.`);
+  console.log(`Imagens específicas aplicadas: ${synced}; pendentes de revisão: ${failed}.`);
 }
 
 main().finally(()=>prisma.$disconnect());

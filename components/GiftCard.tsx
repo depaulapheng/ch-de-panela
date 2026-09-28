@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { money } from "@/lib/utils";
 import { GiftImage } from "@/components/GiftImage";
+import { isKnownGenericGiftImage } from "@/lib/gift-image-policy";
 
 type Gift={
   id:string;name:string;description:string|null;imageUrl:string|null;imageCredit?:string|null;imageLicense?:string|null;imageSourceUrl?:string|null;approximateValue:any;
@@ -14,7 +15,7 @@ export function GiftCard({gift}:{gift:Gift}){
   return <article className="card gift-card">
     <div className="gift-img">
             <GiftImage src={gift.imageUrl} alt={gift.name} category={gift.category.name}/>
-      {gift.imageUrl&&gift.imageCredit&&<a className="image-credit" href={gift.imageSourceUrl||gift.imageUrl} target="_blank" rel="noreferrer">Foto: {gift.imageCredit}{gift.imageLicense?` · ${gift.imageLicense}`:""}</a>}
+      {!isKnownGenericGiftImage(gift.imageUrl)&&gift.imageCredit&&<a className="image-credit" href={gift.imageSourceUrl||gift.imageUrl} target="_blank" rel="noreferrer">Foto: {gift.imageCredit}{gift.imageLicense?` · ${gift.imageLicense}`:""}</a>}
 </div>
     <div className="gift-body">
       <span className="badge">{gift.category.name}</span>
