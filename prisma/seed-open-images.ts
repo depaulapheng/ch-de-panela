@@ -6,11 +6,47 @@ const manualImages: Record<string, {
   imageLicense: string | null;
   imageSourceUrl: string;
 }> = {
-  "Jogo de colheres de silicone": {    imageUrl: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Silicone%20ladles.jpeg?width=960",    imageCredit: null,    imageLicense: "Public domain",    imageSourceUrl: "https://commons.wikimedia.org/wiki/File:Silicone_ladles.jpeg"  },  "Espátula": {    imageUrl: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Kitchen-spatula.jpg?width=960",    imageCredit: "Evan-Amos",    imageLicense: "Public domain",    imageSourceUrl: "https://commons.wikimedia.org/wiki/File:Kitchen-spatula.jpg"  },  "Concha": {    imageUrl: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Soup%20Ladle%20by%20James%20Walker%20-%20James%20Walker%20-%20ABDAG001389.jpg?width=960",    imageCredit: null,    imageLicense: "Public domain",    imageSourceUrl: "https://commons.wikimedia.org/wiki/File:Soup_Ladle_by_James_Walker_-_James_Walker_-_ABDAG001389.jpg"  },  "Pegador de macarrão": {
+  "Jogo de colheres de silicone": {
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Silicone%20ladles.jpeg?width=960",
+    imageCredit: null,
+    imageLicense: "Public domain",
+    imageSourceUrl: "https://commons.wikimedia.org/wiki/File:Silicone_ladles.jpeg"
+  },
+  "Espátula": {
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Kitchen-spatula.jpg?width=960",
+    imageCredit: "Evan-Amos",
+    imageLicense: "Public domain",
+    imageSourceUrl: "https://commons.wikimedia.org/wiki/File:Kitchen-spatula.jpg"
+  },
+  "Concha": {
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Soup%20Ladle%20by%20James%20Walker%20-%20James%20Walker%20-%20ABDAG001389.jpg?width=960",
+    imageCredit: null,
+    imageLicense: "Public domain",
+    imageSourceUrl: "https://commons.wikimedia.org/wiki/File:Soup_Ladle_by_James_Walker_-_James_Walker_-_ABDAG001389.jpg"
+  },
+  "Pegador de macarrão": {
     imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Goodcook_Grey_Spaghetti_Spoon_%2853504577283%29.jpg/960px-Goodcook_Grey_Spaghetti_Spoon_%2853504577283%29.jpg",
     imageCredit: null,
     imageLicense: null,
     imageSourceUrl: "https://commons.wikimedia.org/wiki/File:Goodcook_Grey_Spaghetti_Spoon_(53504577283).jpg"
+  },
+  "Abridor de latas": {
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Kitchen-Classic-Can-Opener.jpg?width=960",
+    imageCredit: "Evan-Amos",
+    imageLicense: "Public domain",
+    imageSourceUrl: "https://commons.wikimedia.org/wiki/File:Kitchen-Classic-Can-Opener.jpg"
+  },
+  "Saca-rolha": {
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Corkscrew%20P1150886.jpg?width=960",
+    imageCredit: "David Monniaux",
+    imageLicense: "CC BY-SA 3.0",
+    imageSourceUrl: "https://commons.wikimedia.org/wiki/File:Corkscrew_P1150886.jpg"
+  },
+  "Tesoura de cozinha": {
+    imageUrl: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Kitchen-Scissors.jpg?width=960",
+    imageCredit: "Evan-Amos",
+    imageLicense: "Public domain",
+    imageSourceUrl: "https://commons.wikimedia.org/wiki/File:Kitchen-Scissors.jpg"
   }
 };
 
@@ -135,7 +171,7 @@ async function findCommonsImage(name:string){
   const params=new URLSearchParams({
     action:"query",
     generator:"search",
-    gsrsearch:q,
+    gsrsearch:`intitle:\"${q}\"`,
     gsrnamespace:"6",
     gsrlimit:"12",
     prop:"imageinfo",
@@ -173,24 +209,25 @@ async function findCommonsImage(name:string){
 }
 
 async function main(){
-  for(const [name,image] of Object.entries(manualImages)){    await prisma.gift.updateMany({where:{name,active:true},data:image});  }  const gifts=await prisma.gift.findMany({
-    where:{active:true,imageUrl:null},
+  const gifts=await prisma.gift.findMany({
+    where:{active:true,OR:[{imageUrl:null},{imageUrl:{contains:"api.openverse.org"}},{name:{in:Object.keys(manualImages)}}]},
     select:{id:true,name:true},
     orderBy:{sortOrder:"asc"}
   });
   if(!gifts.length) return;
 
-  console.log(`🌸 Openverse: procurando fotos reais para ${gifts.length} presente(s)...`);
+  console.log(`🌸 Imagens verificadas: revisando ${gifts.length} presente(s)...`);
   let synced=0, failed=0;
 
   for(const gift of gifts){
     try{
-      const found=manualImages[gift.name] || (await findOpenverseImage(gift.name)) || (await findCommonsImage(gift.name));
+      const found=manualImages[gift.name] || (await findCommonsImage(gift.name));
       if(found?.imageUrl){
         await prisma.gift.update({where:{id:gift.id},data:found});
         synced++;
         console.log(`   ✓ ${gift.name}`);
       }else{
+        await prisma.gift.update({where:{id:gift.id},data:{imageUrl:null,imageCredit:null,imageLicense:null,imageSourceUrl:null}});
         failed++;
         console.log(`   • sem foto adequada: ${gift.name}`);
       }
@@ -200,7 +237,7 @@ async function main(){
     }
     await new Promise(resolve=>setTimeout(resolve,180));
   }
-  console.log(`🌸 Openverse: ${synced} foto(s) aplicadas; ${failed} sem foto.`);
+  console.log(`🌸 Imagens verificadas: ${synced} foto(s) aplicadas; ${failed} com placeholder seguro.`);
 }
 
 main().finally(()=>prisma.$disconnect());
