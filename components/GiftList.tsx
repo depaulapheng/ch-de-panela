@@ -3,10 +3,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { money } from "@/lib/utils";
 import { GiftImage } from "@/components/GiftImage";
+import { isKnownGenericGiftImage } from "@/lib/gift-image-policy";
 
 type Color={id:string;name:string;hex:string|null};
 type Gift={
-  id:string;name:string;description:string|null;imageUrl:string|null;approximateValue:any;
+  id:string;name:string;description:string|null;imageUrl:string|null;imageCredit?:string|null;imageLicense?:string|null;imageSourceUrl?:string|null;approximateValue:any;
   desiredQuantity:number;reservedQuantity:number;priority:string;purchaseUrl:string|null;
   brand:string|null;model:string|null;note:string|null;acceptsInstallments:boolean;
   installmentCount:number|null;installmentValue:any;installments:{status:string}[];
@@ -113,6 +114,7 @@ export function GiftList({gifts,categories}:{gifts:Gift[];categories:{id:string;
       return <article key={g.id} className="card gift-card">
         <div className="gift-img">
           <GiftImage src={g.imageUrl} alt={g.name} category={g.category.name}/>
+          {g.imageUrl&&!isKnownGenericGiftImage(g.imageUrl)&&g.imageCredit&&<a className="image-credit" href={g.imageSourceUrl||g.imageUrl} target="_blank" rel="noopener noreferrer">Foto: {g.imageCredit}{g.imageLicense?` · ${g.imageLicense}`:""}</a>}
         </div>
         <div className="gift-body">
           <span className="badge">{g.category.name}</span>
