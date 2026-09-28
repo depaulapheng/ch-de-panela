@@ -15,7 +15,7 @@ export function GiftCard({gift}:{gift:Gift}){
   return <article className="card gift-card">
     <div className="gift-img">
             <GiftImage src={gift.imageUrl} alt={gift.name} category={gift.category.name}/>
-      {!isKnownGenericGiftImage(gift.imageUrl)&&gift.imageCredit&&<a className="image-credit" href={gift.imageSourceUrl||gift.imageUrl} target="_blank" rel="noreferrer">Foto: {gift.imageCredit}{gift.imageLicense?` · ${gift.imageLicense}`:""}</a>}
+      {gift.imageUrl&&!isKnownGenericGiftImage(gift.imageUrl)&&gift.imageCredit&&<a className="image-credit" href={gift.imageSourceUrl||gift.imageUrl} target="_blank" rel="noreferrer">Foto: {gift.imageCredit}{gift.imageLicense?` · ${gift.imageLicense}`:""}</a>}
 </div>
     <div className="gift-body">
       <span className="badge">{gift.category.name}</span>
