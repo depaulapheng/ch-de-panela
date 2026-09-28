@@ -48,7 +48,21 @@ export function isRelevantGoogleProductImage(item:GoogleImageItem, name:string){
   return true;
 }
 
-export async function searchGoogleProductImage(name: string): Promise<string|null> {
+export function selectRelevantGoogleProductImage(
+  items: GoogleImageItem[],
+  name: string,
+  excludedUrls: ReadonlySet<string> = new Set()
+): string | null {
+  return items.find(item =>
+    isRelevantGoogleProductImage(item, name) &&
+    !excludedUrls.has((item.link || "").trim())
+  )?.link?.trim() || null;
+}
+
+export async function searchGoogleProductImage(
+  name: string,
+  excludedUrls: ReadonlySet<string> = new Set()
+): Promise<string|null> {
   const key=process.env.GOOGLE_CSE_API_KEY;
   const cx=process.env.GOOGLE_CSE_CX;
   if (!key || !cx) throw new Error("GOOGLE_IMAGE_CONFIG_MISSING");
@@ -64,5 +78,5 @@ export async function searchGoogleProductImage(name: string): Promise<string|nul
     throw new Error("GOOGLE_IMAGE_HTTP_" + response.status);
   }
   const data=await response.json() as {items?:GoogleImageItem[]};
-  return data.items?.find(item=>isRelevantGoogleProductImage(item,name))?.link || null;
+  return selectRelevantGoogleProductImage(data.items || [], name, excludedUrls);
 }
