@@ -34,7 +34,8 @@ async function main() {
           bg: getComputedStyle(document.body).backgroundColor,
           brand: document.querySelector(".brand-monogram")?.textContent,
           ornaments: document.querySelectorAll("#pink-orchid,#orange-orchid").length,
-          missingVisibleImages: [...document.querySelectorAll("img")].filter(img => img.complete && !img.naturalWidth).length
+          missingVisibleImages: [...document.querySelectorAll("img")].filter(img => img.complete && !img.naturalWidth).length,
+          overflowElements: [...document.querySelectorAll("body *")].map(el => ({el:el.tagName.toLowerCase(),className:typeof el.className==="string"?el.className:"svg",right:Math.round(el.getBoundingClientRect().right),width:Math.round(el.getBoundingClientRect().width)})).filter(x=>x.right>document.documentElement.clientWidth+3).slice(0,12)
         }));
         if (layout.scrollWidth > layout.clientWidth + 3) {
           throw new Error(route.name + " overflows " + viewport.name + ": " + JSON.stringify(layout));
