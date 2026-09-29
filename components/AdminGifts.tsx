@@ -111,7 +111,7 @@ export function AdminGifts(){
         <button className="btn" type="button" aria-pressed={imageFilter==="duplicate"} onClick={()=>setImageFilter("duplicate")}>Repetidas ({duplicateImageIds.size})</button>
       </div>
       <div className="image-audit-grid">{imageAuditGifts.map(g=><article className="card image-audit-card" key={g.id}>
-        <div className="image-audit-photo"><GiftImage src={g.imageUrl} alt={g.name} category={g.category.name}/></div>
+        <div className="image-audit-photo"><GiftImage src={g.imageUrl} alt={g.name} category={g.category.name} giftId={g.id}/></div>
         <div className="image-audit-details">
           <span className="badge">{g.category.name}</span><h3>{g.name}</h3>
           <p className="admin-image-note">{isKnownGenericGiftImage(g.imageUrl)?"Imagem específica ausente":duplicateImageIds.has(g.id)?"Imagem repetida — conferir":"Imagem cadastrada — conferir visualmente"}</p>
@@ -133,7 +133,7 @@ export function AdminGifts(){
           <td>{g.category.name}</td>
           <td>{g.reservedQuantity}/{g.desiredQuantity}</td>
           <td>{g.approximateValue??"—"}</td>
-          <td><div className="admin-image-preview"><GiftImage src={g.imageUrl} alt={g.name} category={g.category.name}/></div><div className="admin-image-note">{isKnownGenericGiftImage(g.imageUrl)?"Aguardando imagem específica":duplicateImageIds.has(g.id)?"Imagem repetida — conferir":"Imagem cadastrada — conferir"}</div></td>
+          <td><div className="admin-image-preview"><GiftImage src={g.imageUrl} alt={g.name} category={g.category.name} giftId={g.id}/></div><div className="admin-image-note">{isKnownGenericGiftImage(g.imageUrl)?"Aguardando imagem específica":duplicateImageIds.has(g.id)?"Imagem repetida — conferir":"Imagem cadastrada — conferir"}</div></td>
           <td>{g.active?"Ativo":"Arquivado"}</td>
           <td><div style={{display:"flex",gap:6}}>
             <button className="btn" onClick={()=>edit(g)}>Editar</button>

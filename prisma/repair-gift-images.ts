@@ -5,20 +5,25 @@ import { searchGoogleProductImageCandidates } from "../lib/google-images";
 import { commonsGiftCandidates } from "../lib/commons-images";
 
 const prisma = new PrismaClient();
-const repairKey = "gift-image-repair-20260929-v2";
+const repairKey = "gift-image-repair-20260929-v3";
 
 // Exact legacy associations identified as mismatches in the complete live
 // catalogue; no broad deletion by category, no change to verified photos.
-const mismatches: Record<string,string> = {
-  "Chaleira": "Kettle_pond_Hossa",
-  "Saladeira pequena": "Lactuca_sativa_var._crispa",
-  "Copos": "Britannica_Glass_Venetian_Drinking_Glasses",
-  "Travessa pequena": "Serving_Dish_%28Italy%29",
-  "Sousplat": "Eisenhower_presidential_china_charger_plate",
-  "Pá de lixo": "Dustpan_made_of_a_shell_case",
-  "Assadeira pequena": "Cannoli_on_a_baking_tray",
-  "Descanso de panela": "Benjamin_Resnick%2C_Pot_Trivet"
-};
+const mismatches: Array<{name:string;part:string;category?:string}> = [
+  {name:"Chaleira",part:"Kettle_pond_Hossa"},
+  {name:"Saladeira pequena",part:"Lactuca_sativa_var._crispa"},
+  {name:"Copos",part:"Britannica_Glass_Venetian_Drinking_Glasses"},
+  {name:"Travessa pequena",part:"Serving_Dish_%28Italy%29"},
+  {name:"Sousplat",part:"Eisenhower_presidential_china_charger_plate"},
+  {name:"Pá de lixo",part:"Dustpan_made_of_a_shell_case"},
+  {name:"Assadeira pequena",part:"Cannoli_on_a_baking_tray"},
+  {name:"Descanso de panela",part:"Benjamin_Resnick%2C_Pot_Trivet"},
+  // Complete live audit found these later semantic mismatches.
+  {name:"Frigideira pequena",part:"Rickenbacher_Frying_Pan"},
+  {name:"Organizadores",category:"Cozinha",part:"Blue_plastic_storage_organizer_boxes_for_screws"},
+  {name:"Organizadores",category:"Quarto & Casa",part:"16438326347_2931eae427_b"},
+  {name:"Lixeira pequena",part:"Hotel_room_toilet_"}
+];
 type Attribution = {imageUrl:string; imageCredit:string|null; imageLicense:string|null; imageSourceUrl:string|null};
 const curated: Record<string, Attribution> = {
   "Fouet": {
@@ -30,8 +35,19 @@ const curated: Record<string, Attribution> = {
     imageUrl:"https://commons.wikimedia.org/wiki/Special:Redirect/file/Set%20of%20serving%20ladles%20on%20stainless%20kitchen%20wall.jpg?width=960",
     imageCredit:"Marc-Lautenbacher",imageLicense:"CC BY-SA 4.0",
     imageSourceUrl:"https://commons.wikimedia.org/wiki/File:Set_of_serving_ladles_on_stainless_kitchen_wall.jpg"
+  },
+  "Frigideira pequena": {
+    imageUrl:"https://commons.wikimedia.org/wiki/Special:Redirect/file/Cooking%20frying%20pan.jpg?width=960",
+    imageCredit:null,imageLicense:"CC0 1.0",
+    imageSourceUrl:"https://commons.wikimedia.org/wiki/File:Cooking_frying_pan.jpg"
+  },
+  "Lixeira pequena": {
+    imageUrl:"https://commons.wikimedia.org/wiki/Special:Redirect/file/Trash%20bin.JPG?width=960",
+    imageCredit:null,imageLicense:"CC0 1.0",
+    imageSourceUrl:"https://commons.wikimedia.org/wiki/File:Trash_bin.JPG"
   }
 };
+const manualOnly = new Set(["Organizadores"]);
 
 function permittedUrl(value:string) {
   try {
@@ -76,13 +92,16 @@ async function main() {
     return;
   }
   let invalidated=0,curatedCount=0,synced=0,failed:string[]=[];
-  for(const [name,part] of Object.entries(mismatches)){
+  for(const mismatch of mismatches){
     const result=await prisma.gift.updateMany({
-      where:{name,active:true,imageUrl:{contains:part}},
+      where:{
+        name:mismatch.name,active:true,imageUrl:{contains:mismatch.part},
+        ...(mismatch.category?{category:{name:mismatch.category}}:{})
+      },
       data:{imageUrl:null,imageCredit:null,imageLicense:null,imageSourceUrl:null}
     });
     invalidated+=result.count;
-    if(result.count) console.log("GIFT_IMAGE_REPAIR_INVALID "+JSON.stringify({name,previousMatch:part}));
+    if(result.count) console.log("GIFT_IMAGE_REPAIR_INVALID "+JSON.stringify({name:mismatch.name,category:mismatch.category||null,previousMatch:mismatch.part}));
   }
 
   const gifts=await prisma.gift.findMany({
@@ -115,7 +134,8 @@ async function main() {
     return;
   }
 
-  const unfilled=pending.filter(g=>!curated[g.name]);
+  const unfilled=pending.filter(g=>!curated[g.name] && !manualOnly.has(g.name));
+  for(const gift of pending.filter(g=>manualOnly.has(g.name))) failed.push(gift.name+" ["+gift.category.name+"; kept as placeholder after visual audit]");
   const deadline=Date.now()+220_000;
   let googleUnavailable=false,paused=false,licensedCount=0;
   for(const gift of unfilled){

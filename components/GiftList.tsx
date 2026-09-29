@@ -113,7 +113,7 @@ export function GiftList({gifts,categories}:{gifts:Gift[];categories:{id:string;
         :g.desiredQuantity-g.reservedQuantity;
       return <article key={g.id} className="card gift-card">
         <div className="gift-img">
-          <GiftImage src={g.imageUrl} alt={g.name} category={g.category.name}/>
+          <GiftImage src={g.imageUrl} alt={g.name} category={g.category.name} giftId={g.id}/>
           {g.imageUrl&&!isKnownGenericGiftImage(g.imageUrl)&&g.imageCredit&&<a className="image-credit" href={g.imageSourceUrl||g.imageUrl} target="_blank" rel="noopener noreferrer">Foto: {g.imageCredit}{g.imageLicense?` · ${g.imageLicense}`:""}</a>}
         </div>
         <div className="gift-body">

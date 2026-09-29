@@ -3,14 +3,15 @@
 import { useState } from "react";
 import { isKnownGenericGiftImage } from "@/lib/gift-image-policy";
 
-export function GiftImage({src,alt,category}:{src:string|null;alt:string;category:string}){
+export function GiftImage({src,alt,category,giftId}:{src:string|null;alt:string;category:string;giftId?:string}){
   const [failedUrl,setFailedUrl]=useState<string|null>(null);
-  if (isKnownGenericGiftImage(src) || failedUrl === src) {
+  const proxied=giftId && src && !isKnownGenericGiftImage(src) ? `/api/gifts/${giftId}/image` : src;
+  if (isKnownGenericGiftImage(src) || !proxied || failedUrl === proxied) {
     return <div className="gift-photo-placeholder" role="img" aria-label={"Imagem de " + alt + " em atualização"}>
       <span className="placeholder-symbol" aria-hidden="true">✳</span>
       <strong>{alt}</strong>
       <small>Imagem em atualização</small>
     </div>;
   }
-  return <img key={src} src={src!} alt={alt + " — " + category} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={()=>setFailedUrl(src)}/>;
+  return <img key={proxied} src={proxied} alt={alt + " — " + category} loading="lazy" decoding="async" onError={()=>setFailedUrl(proxied)}/>;
 }
