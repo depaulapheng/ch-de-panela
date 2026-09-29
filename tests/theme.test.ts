@@ -60,5 +60,9 @@ describe("identidade visual oficial Larissa e Pedro", () => {
     const mobile = refinement.slice(refinement.indexOf("@media(max-width:600px)"));
     expect(mobile).toContain(".share{position:static;display:flex;width:fit-content;margin:18px auto;bottom:auto;right:auto}");
   });
+
+  it("limita a caixa da foto ao quadro 4:3, inclusive em fotos verticais", () => {
+    expect(refinement).toContain(".gift-img img{position:absolute;inset:0;min-width:0;min-height:0}");
+  });
 });
 

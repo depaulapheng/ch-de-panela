@@ -64,7 +64,11 @@ async function main() {
             name: card.querySelector(".gift-name")?.textContent,
             src: card.querySelector("img")?.getAttribute("src"),
             loaded: Boolean(card.querySelector("img")?.naturalWidth),
-            fit: card.querySelector("img") ? getComputedStyle(card.querySelector("img")).objectFit : null
+            fit: card.querySelector("img") ? getComputedStyle(card.querySelector("img")).objectFit : null,
+            frameWidth: card.querySelector(".gift-img")?.getBoundingClientRect().width,
+            frameHeight: card.querySelector(".gift-img")?.getBoundingClientRect().height,
+            imageWidth: card.querySelector("img")?.getBoundingClientRect().width,
+            imageHeight: card.querySelector("img")?.getBoundingClientRect().height
           })),
           botanical: [...document.querySelectorAll(".botanical-photo")].map(img => ({
             naturalWidth: img.naturalWidth, renderedWidth: img.getBoundingClientRect().width,
@@ -83,6 +87,7 @@ async function main() {
         if (layout.incompleteGiftImages.length) throw new Error(route.name + " lazy loading incomplete: " + JSON.stringify(layout.incompleteGiftImages));
         if (layout.brokenImages.length) throw new Error(route.name + " has broken images: " + JSON.stringify(layout.brokenImages));
         if (layout.giftPhotoPlaceholders) throw new Error(route.name + " still has gift placeholders: " + layout.giftPhotoPlaceholders);
+        if (layout.giftPhotos.some(photo => photo.imageWidth > photo.frameWidth + 1 || photo.imageHeight > photo.frameHeight + 1)) throw new Error("Portrait photo exceeds and is clipped by its 4:3 frame");
         if (route.name === "presentes") {
           if (layout.giftCount !== 64) throw new Error("Expected the complete 64-item audited catalogue");
           const sources = layout.giftPhotos.map(photo => photo.src);
