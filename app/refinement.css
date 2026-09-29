@@ -1,0 +1,75 @@
+/* Fidelidade à referência floral original. As seis cores oficiais permanecem em editorial.css;
+   as grandes superfícies usam apenas branco, rosa suave e damasco discreto. */
+:root{
+ --surface-soft:#fff9fb; --primary:#8d3f62; --primary-hover:#793351;
+ --accent:var(--palette-pink); --border:#eedce1; --focus:#8d3f62;
+ --fuchsia-dark:#793351; --blush:#f8e4ec; --soft:#fff9fb;
+ --shadow:0 8px 25px rgba(91,53,59,.05)
+}
+body{background:#fff}
+.nav{background:rgba(255,255,255,.97);border-bottom:1px solid #f0e4e5;border-image:none;box-shadow:0 3px 15px rgba(92,51,62,.025)}
+.nav-links a:not(.btn):hover,.nav-login-link{color:#793351}
+.brand-monogram{background:#fff;border-color:#ecdbe0;color:#8d3f62}
+.btn{background:#fff;border-color:#e9d5db;color:#563942;box-shadow:none}
+.btn:hover{background:#fff7fa;border-color:#d9b8c5;box-shadow:0 4px 12px rgba(91,53,59,.055)}
+.btn-primary,.gift-card .btn-primary,.photo-actions .btn-primary{
+ background:#98516f;color:#fff;border:1px solid #98516f;
+ box-shadow:0 5px 14px rgba(141,63,98,.12)
+}
+.btn-primary:hover,.gift-card .btn-primary:hover,.photo-actions .btn-primary:hover{
+ background:#7e405b;color:#fff;border-color:#7e405b;
+ box-shadow:0 6px 16px rgba(141,63,98,.15)
+}
+.hero{min-height:760px;background:#fff;padding:74px 0 85px}
+.hero::after{height:2px;opacity:.58}
+.hero>.container{padding-bottom:50px;max-width:690px}
+.hero .eyebrow{color:#864562}
+.hero-names{font-weight:500;font-size:clamp(4.6rem,10vw,7.5rem);line-height:.8}
+.hero-amp{color:var(--palette-pink)}
+.hero-copy{color:#69565e}
+.hero-monogram{width:auto;height:auto;border:0;box-shadow:none;border-radius:0;background:transparent;font:500 3.2rem/1 var(--display);color:#35272d}
+.hero-monogram span{color:#b47b66;padding:0 7px}
+.hero .romantic-scene{position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none}
+.botanical-photo{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center bottom;opacity:.93;filter:saturate(.91)}
+.gifts-page>.romantic-scene{height:290px;opacity:.19}
+.gifts-page .botanical-photo{object-position:center 67%;opacity:.6}
+.count-box,.count-box:nth-child(odd),.count-box:nth-child(even){
+ background:rgba(255,255,255,.95);border:1px solid #eadfe0;
+ box-shadow:0 4px 13px rgba(91,53,59,.045)
+}
+.count-num,.count-box:nth-child(odd) .count-num{color:#934c6a}
+.count-box:nth-child(even) .count-num{color:#a96e50}
+.card{border-color:#eee2e3;box-shadow:var(--shadow)}
+.gifts-band,.photo-invite-band{background:linear-gradient(110deg,#fff8fb,#fff 54%,#fffbf7)}
+.gift-card{border-color:#eee3e3;box-shadow:0 6px 18px rgba(91,53,59,.045)}
+.gift-card::before{height:2px;background:linear-gradient(90deg,#e6b9cb,#e6c6aa)}
+.gift-card:hover{box-shadow:0 12px 25px rgba(91,53,59,.08)}
+.gift-photo-placeholder{background:linear-gradient(130deg,#fff9fb,#fffbf7)}
+.gift-photo-placeholder .placeholder-symbol{color:#bd839b}
+.badge{background:#fbf1f5;color:#79465a}
+.photo-upload-card{border-top:2px solid #ddb0c2}
+.photo-drop{border-color:#d8b5c3;background:#fffcfd}
+.photo-drop:hover,.photo-drop.is-dragging{background:#fff8fb;border-color:#b97896}
+.photo-drop-icon{background:#f8e5ed;color:#874c66}
+.photo-drop strong{color:#874c66}
+.wedding-band{background:#fcf7f5;color:#4e3740;border-top:1px solid #f1e4e2;border-bottom:1px solid #f1e4e2}
+.wedding-eyebrow{color:#995f46!important}
+.footer{background:#fff;border-top:1px solid #eee2e3;border-image:none}
+.footer .container::before{color:#8d3f62}
+.gifts-heading::after{background:linear-gradient(90deg,#d86190,#dc8b51);height:2px}
+:where(a,button,input,textarea,select,summary):focus-visible{outline:3px solid #8d3f62;outline-offset:3px}
+@media(max-width:900px){
+ .hero{min-height:740px;padding:65px 0 80px}
+ .hero .botanical-photo{opacity:.78}
+}
+@media(max-width:600px){
+ .hero{min-height:0;padding:48px 0 35px}
+ .hero>.container{padding-bottom:168px}
+ .hero-names{font-size:clamp(4rem,17vw,5.2rem)}
+ .hero-monogram{font-size:2.5rem}
+ .hero .romantic-scene{inset:auto 0 0;height:290px}
+ .hero .botanical-photo{opacity:.75;object-fit:cover;object-position:center bottom}
+ .gifts-page>.romantic-scene{height:180px;opacity:.1}
+ .count-num,.count-box:nth-child(odd) .count-num{font-size:2.3rem}
+ .btn{min-height:44px}
+}

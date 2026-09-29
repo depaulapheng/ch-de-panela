@@ -117,7 +117,7 @@ jobs:
           site="https://cha-panela-pedro-larissa.onrender.com"
           ready=0
           for i in {1..120}; do
-            if curl --silent --max-time 15 --fail "$site/api/health" | jq -e '.status=="ok" and .album=="postgres-v2" and .theme=="orchids-v2"' >/dev/null; then ready=1; break; fi
+            if curl --silent --max-time 15 --fail "$site/api/health" | jq -e '.status=="ok" and .album=="postgres-v2" and .theme=="orchids-photo-v3"' >/dev/null; then ready=1; break; fi
             sleep 10
           done
           if [ "$ready" -ne 1 ]; then echo "New Render release never became healthy"; exit 1; fi

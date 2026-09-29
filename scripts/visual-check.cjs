@@ -28,13 +28,15 @@ async function main() {
       ]) {
         const response = await page.goto(baseUrl + route.path, { waitUntil: "networkidle", timeout: 90000 });
         if (!response || response.status() !== 200) throw new Error(route.path + " returned " + response?.status());
+        await page.locator(".botanical-photo").first().waitFor({state:"visible",timeout:12000}).catch(() => {});
         await page.screenshot({ path: path.join(out, route.name + "-" + viewport.name + ".png"), fullPage: true });
         const layout = await page.evaluate(() => ({
           scrollWidth: document.documentElement.scrollWidth,
           clientWidth: document.documentElement.clientWidth,
           bg: getComputedStyle(document.body).backgroundColor,
           brand: document.querySelector(".brand-monogram")?.textContent,
-          ornaments: document.querySelectorAll("#pink-orchid,#orange-orchid").length,
+          photographicArt: [...document.querySelectorAll(".botanical-photo")].every(img => img.complete && img.naturalWidth > 0),
+          ornaments: document.querySelectorAll(".botanical-photo").length,
           missingVisibleImages: [...document.querySelectorAll("img")].filter(img => img.complete && !img.naturalWidth).length,
           giftCount: document.querySelectorAll(".gift-card").length,
           giftPhotoPlaceholders: document.querySelectorAll(".gift-card .gift-photo-placeholder").length,
@@ -43,7 +45,7 @@ async function main() {
         if (layout.scrollWidth > layout.clientWidth + 3) {
           throw new Error(route.name + " overflows " + viewport.name + ": " + JSON.stringify(layout));
         }
-        if (layout.bg !== "rgb(255, 255, 255)" || layout.brand !== "L|P" || (route.name !== "album" && layout.ornaments !== 2)) {
+        if (layout.bg !== "rgb(255, 255, 255)" || layout.brand !== "L|P" || (route.name !== "album" && (layout.ornaments !== 1 || !layout.photographicArt))) {
           throw new Error(route.name + " lost identity: " + JSON.stringify(layout));
         }
         report.push({ route: route.path, viewport: viewport.name, status: response.status(), ...layout });

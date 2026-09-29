@@ -5,7 +5,7 @@ import { searchGoogleProductImageCandidates } from "../lib/google-images";
 import { commonsGiftCandidates } from "../lib/commons-images";
 
 const prisma = new PrismaClient();
-const repairKey = "gift-image-repair-20260929-v3";
+const repairKey = "gift-image-repair-20260929-v4";
 
 // Exact legacy associations identified as mismatches in the complete live
 // catalogue; no broad deletion by category, no change to verified photos.
@@ -26,6 +26,11 @@ const mismatches: Array<{name:string;part:string;category?:string}> = [
 ];
 type Attribution = {imageUrl:string; imageCredit:string|null; imageLicense:string|null; imageSourceUrl:string|null};
 const curated: Record<string, Attribution> = {
+  "Porta-detergente": {
+    imageUrl:"https://commons.wikimedia.org/wiki/Special:Redirect/file/CreativeTools.se%20-%20PackshotCreator%20-%20Soap%20dispenser%20%284339926521%29.jpg?width=960",
+    imageCredit:"Creative Tools",imageLicense:"CC BY 2.0",
+    imageSourceUrl:"https://commons.wikimedia.org/wiki/File:CreativeTools.se_-_PackshotCreator_-_Soap_dispenser_(4339926521).jpg"
+  },
   "Fouet": {
     imageUrl:"https://commons.wikimedia.org/wiki/Special:Redirect/file/Fouet%20de%20cuisine.jpg?width=960",
     imageCredit:"Clément Bucco-Lechat",imageLicense:"CC BY-SA 3.0",
@@ -116,7 +121,7 @@ async function main() {
   for(const gift of pending){
     const specified=curated[gift.name];
     const id=giftImageIdentity(specified?.imageUrl);
-    if(specified && id && !used.has(id)){
+    if(specified && id && !used.has(id) && (process.env.GITHUB_ACTIONS==="true" || await availablePhoto(specified.imageUrl))){
       const result=await prisma.gift.updateMany({
         where:{id:gift.id,active:true,imageUrl:null},data:specified
       });

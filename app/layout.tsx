@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./editorial.css";
+import "./refinement.css";
 import { Nav } from "@/components/Nav";
 import { ShareButton } from "@/components/ShareButton";
 import { prisma } from "@/lib/db";

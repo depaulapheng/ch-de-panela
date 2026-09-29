@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 
 const theme = readFileSync("app/editorial.css", "utf8");
 const layout = readFileSync("app/layout.tsx", "utf8");
+const refinement = readFileSync("app/refinement.css", "utf8");
+const art = readFileSync("components/DecorativeBirds.tsx", "utf8");
 
 describe("identidade visual oficial Larissa e Pedro", () => {
   const official = {
@@ -25,6 +27,7 @@ describe("identidade visual oficial Larissa e Pedro", () => {
     expect(layout.indexOf('"./globals.css"')).toBeGreaterThan(-1);
     expect(layout.indexOf('"./editorial.css"')).toBeGreaterThan(layout.indexOf('"./globals.css"'));
     expect(theme).not.toContain("--primary:#a45e4c;");
+    expect(layout.indexOf('"./refinement.css"')).toBeGreaterThan(layout.indexOf('"./editorial.css"'));
   });
 
   it("mantém fontes consistentes e imagens de presentes sem distorção", () => {
@@ -41,5 +44,9 @@ describe("identidade visual oficial Larissa e Pedro", () => {
     expect(theme).toContain(".hero-monogram");
     expect(theme).toContain("flex-wrap:wrap;justify-content:center");
     expect(theme).toContain("overflow-x:visible");
+    expect(art).toContain('src="/botanical-reference.webp"');
+    expect(art).not.toContain("<svg");
+    expect(refinement).toContain("background:#fff");
+    expect(refinement).toContain("background:#98516f;color:#fff");
   });
 });
