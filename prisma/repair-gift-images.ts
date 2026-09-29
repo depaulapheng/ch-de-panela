@@ -64,9 +64,9 @@ const curated: Record<string, Attribution> = {
     imageSourceUrl:"https://www.pexels.com/photo/salad-in-bowl-6989866/"
   },
   "Escova para cantos": {
-    imageUrl:"https://images.pexels.com/photos/3735164/pexels-photo-3735164.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageCredit:"Polina Tankilevitch / Pexels",imageLicense:"Pexels License",
-    imageSourceUrl:"https://www.pexels.com/photo/cleaning-brushes-in-jar-3735164/"
+    imageUrl:"https://images.pexels.com/photos/9462766/pexels-photo-9462766.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageCredit:"Liliana Drew / Pexels",imageLicense:"Pexels License",
+    imageSourceUrl:"https://www.pexels.com/photo/hand-in-rubber-glove-cleaning-bathroom-tiles-9462766/"
   },
   "Porta-detergente": {
     imageUrl:"https://commons.wikimedia.org/wiki/Special:Redirect/file/CreativeTools.se%20-%20PackshotCreator%20-%20Soap%20dispenser%20%284339926521%29.jpg?width=960",
