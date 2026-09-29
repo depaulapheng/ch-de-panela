@@ -10,6 +10,9 @@ type GoogleImageItem = {
 
 const intents: Record<string, { query: string; anchors: string[]; context?: string[] }> = {
   "Concha": { query: "concha de sopa utensílio cozinha produto", anchors: ["concha", "ladle"], context: ["cozinha", "sopa", "utensilio", "silicone", "inox", "ladle"] },
+  "Fouet": { query: "fouet batedor de arame cozinha utensílio produto", anchors: ["fouet", "batedor de arame", "whisk"], context: ["cozinha", "arame", "culinaria", "utensilio", "whisk", "fouet"] },
+  "Espátula": { query: "espátula utensílio culinário cozinha produto", anchors: ["espatula", "spatula", "turner"], context: ["cozinha", "culinaria", "utensilio", "spatula", "turner"] },
+  "Ralador": { query: "ralador de alimentos cozinha utensílio produto", anchors: ["ralador", "grater"], context: ["cozinha", "alimentos", "queijo", "grater", "utensilio"] },
   "Peneira": { query: "peneira cozinha utensílio farinha produto", anchors: ["peneira", "sieve", "strainer"], context: ["cozinha", "farinha", "inox", "utensilio", "sieve", "strainer"] },
   "Escorredor de macarrão": { query: "escorredor de macarrão colander produto", anchors: ["escorredor de macarrao", "colander"] },
   "Tábua de corte": { query: "tábua de corte cozinha produto", anchors: ["tabua de corte", "cutting board"] },
