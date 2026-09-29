@@ -7,10 +7,14 @@ on:
       - "review/**"
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   checks:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     services:
       postgres:
         image: postgres:16
@@ -104,3 +108,33 @@ jobs:
           name: visual-evidence
           path: visual-evidence/
           if-no-files-found: ignore
+
+      - name: Verify published service and clean up synthetic photos
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          site="https://cha-panela-pedro-larissa.onrender.com"
+          ready=0
+          for i in {1..120}; do
+            if curl --silent --max-time 15 --fail "$site/api/health" | jq -e '.status=="ok" and .album=="postgres-v2" and .theme=="orchids-v2"' >/dev/null; then ready=1; break; fi
+            sleep 10
+          done
+          if [ "$ready" -ne 1 ]; then echo "New Render release never became healthy"; exit 1; fi
+          echo "Published health check and release version: OK"
+          status="$(curl --silent --show-error --max-time 90 -o /tmp/prod-upload.json -w '%{http_code}' -F 'photos=@/tmp/album-test.png;filename=album-validation.png;type=image/png' "$site/api/photos")"
+          test "$status" = "201"
+          node -e 'const x=require("/tmp/prod-upload.json");if(!x.ok||x.count!==1||x.uploads?.length!==1||!x.uploads[0].deleteToken)process.exit(1)'
+          id="$(node -e 'process.stdout.write(require("/tmp/prod-upload.json").uploads[0].id)')"
+          token="$(node -e 'process.stdout.write(require("/tmp/prod-upload.json").uploads[0].deleteToken)')"
+          trap 'curl --silent --max-time 15 -X DELETE -H "x-photo-delete-token: $token" "$site/api/photos/$id" >/dev/null || true' EXIT
+          curl --silent --max-time 30 --fail "$site/api/photos" >/tmp/prod-list.json
+          PHOTO_ID="$id" node -e 'if(!require("/tmp/prod-list.json").photos.some(p=>p.id===process.env.PHOTO_ID))process.exit(1)'
+          curl --silent --max-time 30 --fail -D /tmp/prod-headers "$site/api/photos/$id?download=1" -o /tmp/prod-image.png
+          cmp /tmp/album-test.png /tmp/prod-image.png
+          grep -qi 'content-disposition: attachment' /tmp/prod-headers
+          test "$(curl --silent --max-time 30 -o /tmp/prod-invalid.json -w '%{http_code}' -F 'photos=@/tmp/album-invalid.png;filename=fake.png;type=image/png' "$site/api/photos")" = "415"
+          test "$(curl --silent --max-time 30 -o /tmp/prod-delete.json -w '%{http_code}' -X DELETE -H "x-photo-delete-token: $token" "$site/api/photos/$id")" = "200"
+          trap - EXIT
+          test "$(curl --silent --max-time 30 -o /dev/null -w '%{http_code}' "$site/api/photos/$id")" = "404"
+          echo "Published upload, persisted gallery, download, invalid-file rejection and test-file cleanup: OK"
