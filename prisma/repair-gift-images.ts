@@ -2,6 +2,7 @@ import { isIP } from "node:net";
 import { PrismaClient } from "@prisma/client";
 import { giftImageIdentity } from "../lib/gift-image-audit";
 import { searchGoogleProductImageCandidates } from "../lib/google-images";
+import { commonsGiftCandidates } from "../lib/commons-images";
 
 const prisma = new PrismaClient();
 const repairKey = "gift-image-repair-20260929-v2";
@@ -50,7 +51,7 @@ async function availablePhoto(url:string):Promise<boolean> {
       if(!permittedUrl(current)) return false;
       const response=await fetch(current,{
         method:"GET",redirect:"manual",signal:AbortSignal.timeout(5500),
-        headers:{Range:"bytes=0-2047",Accept:"image/avif,image/webp,image/jpeg,image/png"}
+        headers:{Range:"bytes=0-2047",Accept:"image/avif,image/webp,image/jpeg,image/png","User-Agent":"Larissa-Pedro-Gift-Registry/1.0 image-validation"}
       });
       if(response.status>=300 && response.status<400){
         const next=response.headers.get("location");
@@ -110,43 +111,69 @@ async function main() {
   }
 
   const unfilled=pending.filter(g=>!curated[g.name]);
-  const deadline=Date.now()+135_000;
-  let quotaLimited=false;
+  const deadline=Date.now()+220_000;
+  let googleUnavailable=false,paused=false,commonsCount=0;
   for(const gift of unfilled){
-    if(Date.now()>deadline){failed.push(gift.name+" [time budget]");continue;}
-    try {
-      const candidates=await searchGoogleProductImageCandidates(gift.name,gift.category.name,used);
-      let accepted=false;
-      for(const image of candidates.slice(0,5)){
-        const identity=giftImageIdentity(image.imageUrl);
-        if(!identity || used.has(identity))continue;
-        if(!(await availablePhoto(image.imageUrl)))continue;
-        const result=await prisma.gift.updateMany({
-          where:{id:gift.id,active:true,imageUrl:null},
-          data:{imageUrl:image.imageUrl,imageSourceUrl:image.imageSourceUrl,imageCredit:null,imageLicense:null}
-        });
-        if(result.count){
-          synced++;used.add(identity);accepted=true;
-          console.log("GIFT_IMAGE_REPAIR_SYNC "+JSON.stringify({name:gift.name,category:gift.category.name,title:image.title,url:image.imageUrl,source:image.imageSourceUrl}));
-          break;
+    if(Date.now()>deadline){failed.push(gift.name+" [time budget]");paused=true;continue;}
+    let accepted=false;
+    if(!googleUnavailable){
+      try {
+        const candidates=await searchGoogleProductImageCandidates(gift.name,gift.category.name,used);
+        for(const candidate of candidates.slice(0,5)){
+          const identity=giftImageIdentity(candidate.imageUrl);
+          if(!identity || used.has(identity))continue;
+          if(!(await availablePhoto(candidate.imageUrl)))continue;
+          const updated=await prisma.gift.updateMany({
+            where:{id:gift.id,active:true,imageUrl:null},
+            data:{imageUrl:candidate.imageUrl,imageSourceUrl:candidate.imageSourceUrl,imageCredit:null,imageLicense:null}
+          });
+          if(updated.count){
+            synced++;used.add(identity);accepted=true;
+            console.log("GIFT_IMAGE_REPAIR_SYNC "+JSON.stringify({name:gift.name,category:gift.category.name,title:candidate.title,url:candidate.imageUrl,source:candidate.imageSourceUrl}));
+            break;
+          }
         }
-      }
-      if(!accepted)failed.push(gift.name+" [no verified candidate]");
-    }catch(error){
-      const code=error instanceof Error?error.message:"UNKNOWN";
-      failed.push(gift.name+" ["+code+"]");
-      if(/GOOGLE_IMAGE_HTTP_(403|429)|GOOGLE_IMAGE_CONFIG_MISSING/.test(code)){
-        quotaLimited=true;break;
+      } catch(error){
+        const code=error instanceof Error?error.message:"UNKNOWN";
+        if(/GOOGLE_IMAGE_HTTP_(403|429)|GOOGLE_IMAGE_CONFIG_MISSING/.test(code)){
+          googleUnavailable=true;
+          console.warn("GIFT_IMAGE_REPAIR_GOOGLE_UNAVAILABLE "+code);
+        } else console.warn("GIFT_IMAGE_REPAIR_GOOGLE_FAILED "+JSON.stringify({name:gift.name,reason:code}));
       }
     }
+    if(!accepted){
+      try {
+        const openImages=await commonsGiftCandidates(gift.name,used);
+        for(const candidate of openImages.slice(0,5)){
+          const identity=giftImageIdentity(candidate.imageUrl);
+          if(!identity || used.has(identity))continue;
+          if(!(await availablePhoto(candidate.imageUrl)))continue;
+          const updated=await prisma.gift.updateMany({
+            where:{id:gift.id,active:true,imageUrl:null},
+            data:{
+              imageUrl:candidate.imageUrl,imageCredit:candidate.imageCredit,
+              imageLicense:candidate.imageLicense,imageSourceUrl:candidate.imageSourceUrl
+            }
+          });
+          if(updated.count){
+            commonsCount++;used.add(identity);accepted=true;
+            console.log("GIFT_IMAGE_REPAIR_COMMONS "+JSON.stringify({name:gift.name,category:gift.category.name,title:candidate.title,url:candidate.imageUrl,source:candidate.imageSourceUrl,credit:candidate.imageCredit,license:candidate.imageLicense}));
+            break;
+          }
+        }
+      }catch(error){
+        console.warn("GIFT_IMAGE_REPAIR_COMMONS_FAILED "+JSON.stringify({name:gift.name,reason:error instanceof Error?error.name:"unknown"}));
+      }
+    }
+    if(!accepted)failed.push(gift.name+" [no specific accessible candidate]");
   }
   const current=await prisma.gift.count({where:{active:true,imageUrl:null}});
-  const outcome={active:gifts.length,invalidated,curated:curatedCount,synced,missing:current,failed,quotaLimited};
+  const outcome={active:gifts.length,invalidated,curated:curatedCount,synced,commons:commonsCount,missing:current,failed,googleUnavailable,paused};
   console.log("GIFT_IMAGE_REPAIR_SUMMARY "+JSON.stringify(outcome));
   await prisma.siteContent.upsert({
     where:{key:repairKey},
-    create:{key:repairKey,content:quotaLimited?"partial":"complete"},
-    update:{content:quotaLimited?"partial":"complete"}
+    create:{key:repairKey,content:paused?"partial":"complete"},
+    update:{content:paused?"partial":"complete"}
   });
 }
 main().catch(error=>{
