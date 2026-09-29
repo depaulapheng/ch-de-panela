@@ -5,7 +5,7 @@ import { searchGoogleProductImageCandidates } from "../lib/google-images";
 import { commonsGiftCandidates } from "../lib/commons-images";
 
 const prisma = new PrismaClient();
-const repairKey = "gift-image-repair-20260929-v4";
+const repairKey = "gift-image-repair-20260929-v5";
 
 // Exact legacy associations identified as mismatches in the complete live
 // catalogue; no broad deletion by category, no change to verified photos.
@@ -26,6 +26,48 @@ const mismatches: Array<{name:string;part:string;category?:string}> = [
 ];
 type Attribution = {imageUrl:string; imageCredit:string|null; imageLicense:string|null; imageSourceUrl:string|null};
 const curated: Record<string, Attribution> = {
+  // The following editorial selections use photographs explicitly licensed by Pexels.
+  // Separate organizer categories MUST NOT share the same image.
+  "Processador de alimentos manual": {
+    imageUrl:"https://images.pexels.com/photos/37261913/pexels-photo-37261913.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageCredit:"Gu Ko / Pexels",imageLicense:"Pexels License",
+    imageSourceUrl:"https://www.pexels.com/photo/chopping-fresh-herbs-in-a-modern-kitchen-37261913/"
+  },
+  "Organizadores|Cozinha": {
+    imageUrl:"https://images.pexels.com/photos/4096909/pexels-photo-4096909.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageCredit:"Magda Ehlers / Pexels",imageLicense:"Pexels License",
+    imageSourceUrl:"https://www.pexels.com/photo/microwavable-plastic-containers-in-close-up-photography-4096909/"
+  },
+  "Organizadores|Quarto & Casa": {
+    imageUrl:"https://images.pexels.com/photos/38774571/pexels-photo-38774571.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageCredit:"Letícia Alvares / Pexels",imageLicense:"Pexels License",
+    imageSourceUrl:"https://www.pexels.com/photo/flat-lay-of-wooden-hangers-and-storage-box-38774571/"
+  },
+  "Potes para mantimentos": {
+    imageUrl:"https://images.pexels.com/photos/3737639/pexels-photo-3737639.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageCredit:"cottonbro studio / Pexels",imageLicense:"Pexels License",
+    imageSourceUrl:"https://www.pexels.com/photo/clear-glass-jars-filled-with-cereals-3737639/"
+  },
+  "Organizador de geladeira": {
+    imageUrl:"https://images.pexels.com/photos/5794772/pexels-photo-5794772.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageCredit:"Nataliya Vaitkevich / Pexels",imageLicense:"Pexels License",
+    imageSourceUrl:"https://www.pexels.com/photo/fresh-vegetable-in-plastic-containers-5794772/"
+  },
+  "Escorredor de talheres": {
+    imageUrl:"https://images.pexels.com/photos/4108723/pexels-photo-4108723.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageCredit:"cottonbro studio / Pexels",imageLicense:"Pexels License",
+    imageSourceUrl:"https://www.pexels.com/photo/green-plant-on-white-metal-rack-4108723/"
+  },
+  "Saladeira pequena": {
+    imageUrl:"https://images.pexels.com/photos/6989866/pexels-photo-6989866.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageCredit:"minchephoto photography / Pexels",imageLicense:"Pexels License",
+    imageSourceUrl:"https://www.pexels.com/photo/salad-in-bowl-6989866/"
+  },
+  "Escova para cantos": {
+    imageUrl:"https://images.pexels.com/photos/3735164/pexels-photo-3735164.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageCredit:"Polina Tankilevitch / Pexels",imageLicense:"Pexels License",
+    imageSourceUrl:"https://www.pexels.com/photo/cleaning-brushes-in-jar-3735164/"
+  },
   "Porta-detergente": {
     imageUrl:"https://commons.wikimedia.org/wiki/Special:Redirect/file/CreativeTools.se%20-%20PackshotCreator%20-%20Soap%20dispenser%20%284339926521%29.jpg?width=960",
     imageCredit:"Creative Tools",imageLicense:"CC BY 2.0",
@@ -119,7 +161,7 @@ async function main() {
   console.log("GIFT_IMAGE_REPAIR_START "+JSON.stringify({active:gifts.length,pending:pending.length,invalidated,googleConfigured:!!(process.env.GOOGLE_CSE_API_KEY&&process.env.GOOGLE_CSE_CX)}));
 
   for(const gift of pending){
-    const specified=curated[gift.name];
+    const specified=curated[`${gift.name}|${gift.category.name}`] || curated[gift.name];
     const id=giftImageIdentity(specified?.imageUrl);
     if(specified && id && !used.has(id) && (process.env.GITHUB_ACTIONS==="true" || await availablePhoto(specified.imageUrl))){
       const result=await prisma.gift.updateMany({
@@ -139,8 +181,9 @@ async function main() {
     return;
   }
 
-  const unfilled=pending.filter(g=>!curated[g.name] && !manualOnly.has(g.name));
-  for(const gift of pending.filter(g=>manualOnly.has(g.name))) failed.push(gift.name+" ["+gift.category.name+"; kept as placeholder after visual audit]");
+  const remaining=await prisma.gift.findMany({where:{active:true,imageUrl:null},select:{id:true,name:true,imageUrl:true,category:{select:{name:true}}}});
+  const unfilled=remaining.filter(g=>!manualOnly.has(g.name));
+  for(const gift of remaining.filter(g=>manualOnly.has(g.name))) failed.push(gift.name+" ["+gift.category.name+"; kept as placeholder after visual audit]");
   const deadline=Date.now()+220_000;
   let googleUnavailable=false,paused=false,licensedCount=0;
   for(const gift of unfilled){
