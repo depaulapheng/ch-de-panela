@@ -82,8 +82,8 @@ async function searchGoogle(query:string) {
   });
   const response = await fetch(`https://customsearch.googleapis.com/customsearch/v1?${params}`, {cache:"no-store"});
   if (!response.ok) {
-    const body=(await response.text()).replace(/\s+/g," ").slice(0,500);
-    throw new Error(`GOOGLE_IMAGE_HTTP_${response.status}: ${body}`);
+    // Provider responses can echo API identifiers; do not surface them in logs.
+    throw new Error(`GOOGLE_IMAGE_HTTP_${response.status}`);
   }
   const data=await response.json() as {items?:{link?:string;image?:{thumbnailLink?:string}}[]};
   return data.items?.[0]?.link || data.items?.[0]?.image?.thumbnailLink || null;

@@ -12,6 +12,11 @@ describe("segurança das fotografias dos presentes",()=>{
     expect(isRelevantGoogleProductImage({title:"Concha do mar decorativa",link:"https://example.com/praia.jpg"},"Concha")).toBe(false);
     expect(isRelevantGoogleProductImage({title:"Concha de cozinha para sopa em inox",link:"https://example.com/concha.jpg"},"Concha")).toBe(true);
   });
+  it("entende Fouet como batedor de arame e recusa itens sem essa descrição",()=>{
+    expect(isRelevantGoogleProductImage({title:"Fouet batedor de arame para cozinha",link:"https://example.com/whisk.jpg"},"Fouet")).toBe(true);
+    expect(isRelevantGoogleProductImage({title:"Batedor de arame whisk culinário",link:"https://example.com/whisk.jpg"},"Fouet")).toBe(true);
+    expect(isRelevantGoogleProductImage({title:"Fouet perfume decoração",link:"https://example.com/perfume.jpg"},"Fouet")).toBe(false);
+  });
   it("não associa escova de louça a uma pessoa limpando janela",()=>{
     expect(isRelevantGoogleProductImage({title:"Pessoa limpando janela",link:"https://example.com/janela.jpg"},"Escova para louça")).toBe(false);
     expect(isRelevantGoogleProductImage({title:"Escova para louça de cozinha",link:"https://example.com/escova.jpg"},"Escova para louça")).toBe(true);

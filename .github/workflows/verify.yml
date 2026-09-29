@@ -7,10 +7,28 @@ on:
       - "review/**"
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   checks:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: cha_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d cha_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       DATABASE_URL: postgresql://postgres:password@localhost:5432/cha_test
       APP_URL: http://localhost:3000
@@ -24,6 +42,99 @@ jobs:
           cache-dependency-path: package.json
       - run: npm install --no-audit --no-fund
       - run: npx prisma generate
+      - run: npx prisma migrate deploy
       - run: npm test
       - run: npx tsc --noEmit
       - run: npm run build
+      - name: Validate real album HTTP flow against persistent Postgres
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import struct, zlib
+          def chunk(tag, payload):
+              return struct.pack(">I",len(payload))+tag+payload+struct.pack(">I",zlib.crc32(tag+payload)&0xffffffff)
+          header=struct.pack(">IIBBBBB",1,1,8,6,0,0,0)
+          pixels=zlib.compress(bytes([0,240,100,160,255]))
+          with open("/tmp/album-test.png","wb") as f:
+              f.write(b"\x89PNG\r\n\x1a\n"+chunk(b"IHDR",header)+chunk(b"IDAT",pixels)+chunk(b"IEND",b""))
+          PY
+          npm start >/tmp/album-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for i in {1..40}; do
+            if curl --silent --fail http://localhost:3000/api/health >/tmp/album-health.json; then ready=1; break; fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then cat /tmp/album-server.log; exit 1; fi
+          test "$(curl --silent -o /tmp/album-upload.json -w '%{http_code}' -F 'photos=@/tmp/album-test.png;type=image/png' http://localhost:3000/api/photos)" = "201"
+          node -e 'const d=require("/tmp/album-upload.json"); if(!d.ok || d.count!==1)process.exit(1)'
+          curl --silent --fail http://localhost:3000/api/photos >/tmp/album-list.json
+          photo_id="$(node -e 'const d=require("/tmp/album-list.json"); if(!Array.isArray(d.photos)||d.photos.length<1)process.exit(1); process.stdout.write(d.photos[0].id)')"
+          curl --silent --fail -D /tmp/album-download-headers "http://localhost:3000/api/photos/$photo_id?download=1" -o /tmp/album-download.png
+          cmp /tmp/album-test.png /tmp/album-download.png
+          grep -qi 'content-disposition: attachment' /tmp/album-download-headers
+          test "$(curl --silent -o /tmp/album-multiple.json -w '%{http_code}' -F 'photos=@/tmp/album-test.png;type=image/png' -F 'photos=@/tmp/album-test.png;type=image/png' http://localhost:3000/api/photos)" = "201"
+          node -e 'if(require("/tmp/album-multiple.json").count!==2)process.exit(1)'
+          printf '<script>not an image</script>' >/tmp/album-invalid.png
+          test "$(curl --silent -o /tmp/album-invalid.json -w '%{http_code}' -F 'photos=@/tmp/album-invalid.png;type=image/png' http://localhost:3000/api/photos)" = "415"
+          node -e 'const {PrismaClient}=require("@prisma/client"); const db=new PrismaClient(); db.guestPhoto.count().then(n=>{if(n<3)process.exitCode=1;console.log("Persisted test photos:",n)}).finally(()=>db.$disconnect())'
+
+      - name: Seed visual test data
+        run: npm run seed
+      - name: Install Chromium browser for visual checks
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Test layout in desktop and mobile browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm start >/tmp/site-visual.log 2>&1 &
+          site_pid=$!
+          trap 'kill "$site_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for i in {1..45}; do
+            if curl --silent --fail http://localhost:3000/api/health >/dev/null; then ready=1; break; fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then cat /tmp/site-visual.log; exit 1; fi
+          node scripts/visual-check.cjs
+      - name: Save screenshots and visual audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-evidence
+          path: visual-evidence/
+          if-no-files-found: ignore
+
+      - name: Verify published service and clean up synthetic photos
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          site="https://cha-panela-pedro-larissa.onrender.com"
+          ready=0
+          for i in {1..120}; do
+            if curl --silent --max-time 15 --fail "$site/api/health" | jq -e '.status=="ok" and .album=="postgres-v2" and .theme=="orchids-v2"' >/dev/null; then ready=1; break; fi
+            sleep 10
+          done
+          if [ "$ready" -ne 1 ]; then echo "New Render release never became healthy"; exit 1; fi
+          echo "Published health check and release version: OK"
+          status="$(curl --silent --show-error --max-time 90 -o /tmp/prod-upload.json -w '%{http_code}' -F 'photos=@/tmp/album-test.png;filename=album-validation.png;type=image/png' "$site/api/photos")"
+          test "$status" = "201"
+          node -e 'const x=require("/tmp/prod-upload.json");if(!x.ok||x.count!==1||x.uploads?.length!==1||!x.uploads[0].deleteToken)process.exit(1)'
+          id="$(node -e 'process.stdout.write(require("/tmp/prod-upload.json").uploads[0].id)')"
+          token="$(node -e 'process.stdout.write(require("/tmp/prod-upload.json").uploads[0].deleteToken)')"
+          trap 'curl --silent --max-time 15 -X DELETE -H "x-photo-delete-token: $token" "$site/api/photos/$id" >/dev/null || true' EXIT
+          curl --silent --max-time 30 --fail "$site/api/photos" >/tmp/prod-list.json
+          PHOTO_ID="$id" node -e 'if(!require("/tmp/prod-list.json").photos.some(p=>p.id===process.env.PHOTO_ID))process.exit(1)'
+          curl --silent --max-time 30 --fail -D /tmp/prod-headers "$site/api/photos/$id?download=1" -o /tmp/prod-image.png
+          cmp /tmp/album-test.png /tmp/prod-image.png
+          grep -qi 'content-disposition: attachment' /tmp/prod-headers
+          test "$(curl --silent --max-time 30 -o /tmp/prod-invalid.json -w '%{http_code}' -F 'photos=@/tmp/album-invalid.png;filename=fake.png;type=image/png' "$site/api/photos")" = "415"
+          test "$(curl --silent --max-time 30 -o /tmp/prod-delete.json -w '%{http_code}' -X DELETE -H "x-photo-delete-token: $token" "$site/api/photos/$id")" = "200"
+          trap - EXIT
+          test "$(curl --silent --max-time 30 -o /dev/null -w '%{http_code}' "$site/api/photos/$id")" = "404"
+          echo "Published upload, persisted gallery, download, invalid-file rejection and test-file cleanup: OK"
