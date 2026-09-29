@@ -55,5 +55,10 @@ describe("identidade visual oficial Larissa e Pedro", () => {
     expect(refinement).toContain("background:#fff");
     expect(refinement).toContain("background:#98516f;color:#fff");
   });
+
+  it("mantém compartilhar no fluxo mobile para não cobrir contagem e cards", () => {
+    const mobile = refinement.slice(refinement.indexOf("@media(max-width:600px)"));
+    expect(mobile).toContain(".share{position:static;display:flex;width:fit-content;margin:18px auto;bottom:auto;right:auto}");
+  });
 });
 

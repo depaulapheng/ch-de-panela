@@ -65,6 +65,7 @@ body{background:#fff}
  .hero .botanical-photo{opacity:1}
 }
 @media(max-width:600px){
+ .share{position:static;display:flex;width:fit-content;margin:18px auto;bottom:auto;right:auto}
  .hero{min-height:0;padding:48px 0 35px}
  .hero>.container{padding-bottom:168px}
  .hero-names{font-size:clamp(4rem,17vw,5.2rem)}

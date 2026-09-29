@@ -52,6 +52,7 @@ async function main() {
           clientWidth: document.documentElement.clientWidth,
           bg: getComputedStyle(document.body).backgroundColor,
           brand: document.querySelector(".brand-monogram")?.textContent,
+          sharePosition: document.querySelector(".share") ? getComputedStyle(document.querySelector(".share")).position : null,
           photographicArt: [...document.querySelectorAll(".botanical-photo")].every(img => img.complete && img.naturalWidth > 0),
           ornaments: document.querySelectorAll(".botanical-photo").length,
           missingVisibleImages: [...document.querySelectorAll("img")].filter(img => img.complete && !img.naturalWidth).length,
@@ -75,6 +76,7 @@ async function main() {
         if (layout.scrollWidth > layout.clientWidth + 3) {
           throw new Error(route.name + " overflows " + viewport.name + ": " + JSON.stringify(layout));
         }
+        if (viewport.name === "mobile" && layout.sharePosition !== "static") throw new Error("Mobile share button still overlays content");
         if (layout.bg !== "rgb(255, 255, 255)" || layout.brand !== "L|P" || (route.name !== "album" && (layout.ornaments !== 1 || !layout.photographicArt))) {
           throw new Error(route.name + " lost identity: " + JSON.stringify(layout));
         }
