@@ -117,7 +117,7 @@ async function main() {
 
   const unfilled=pending.filter(g=>!curated[g.name]);
   const deadline=Date.now()+220_000;
-  let googleUnavailable=false,paused=false,commonsCount=0;
+  let googleUnavailable=false,paused=false,licensedCount=0;
   for(const gift of unfilled){
     if(Date.now()>deadline){failed.push(gift.name+" [time budget]");paused=true;continue;}
     let accepted=false;
@@ -161,8 +161,8 @@ async function main() {
             }
           });
           if(updated.count){
-            commonsCount++;used.add(identity);accepted=true;
-            console.log("GIFT_IMAGE_REPAIR_COMMONS "+JSON.stringify({name:gift.name,category:gift.category.name,title:candidate.title,url:candidate.imageUrl,source:candidate.imageSourceUrl,credit:candidate.imageCredit,license:candidate.imageLicense}));
+            licensedCount++;used.add(identity);accepted=true;
+            console.log("GIFT_IMAGE_REPAIR_LICENSED "+JSON.stringify({name:gift.name,category:gift.category.name,title:candidate.title,url:candidate.imageUrl,source:candidate.imageSourceUrl,credit:candidate.imageCredit,license:candidate.imageLicense}));
             break;
           }
         }
@@ -173,7 +173,7 @@ async function main() {
     if(!accepted)failed.push(gift.name+" [no specific accessible candidate]");
   }
   const current=await prisma.gift.count({where:{active:true,imageUrl:null}});
-  const outcome={active:gifts.length,invalidated,curated:curatedCount,synced,commons:commonsCount,missing:current,failed,googleUnavailable,paused};
+  const outcome={active:gifts.length,invalidated,curated:curatedCount,synced,licensed:licensedCount,missing:current,failed,googleUnavailable,paused};
   console.log("GIFT_IMAGE_REPAIR_SUMMARY "+JSON.stringify(outcome));
   await prisma.siteContent.upsert({
     where:{key:repairKey},
