@@ -14,7 +14,7 @@ export default async function AdminPhotosPage() {
   return <AdminShell>
     <div className="eyebrow">Álbum compartilhado</div>
     <h1 className="subtitle">Fotos enviadas pelos convidados</h1>
-    <p className="muted admin-lead">Veja as fotos recebidas e baixe todo o álbum de uma só vez.</p>
+    <p className="muted admin-lead">Veja as fotos recebidas, baixe o álbum ou apague uma foto que não queira manter. A exclusão pede confirmação.</p>
     <AdminPhotos photos={photos} />
   </AdminShell>;
 }

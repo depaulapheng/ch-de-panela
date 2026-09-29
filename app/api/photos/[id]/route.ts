@@ -17,7 +17,9 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     headers: {
       "content-type": photo.mimeType,
       "content-length": String(photo.size),
-      "cache-control": "public, max-age=86400, immutable",
+      // Owners can remove a photo at any time; do not retain a deleted upload
+      // in shared/browser caches for another day.
+      "cache-control": "no-store",
       "x-content-type-options": "nosniff",
       ...(download ? { "content-disposition": `attachment; filename="${safeName}"` } : {})
     }
