@@ -5,7 +5,7 @@ import { searchGoogleProductImageCandidates } from "../lib/google-images";
 import { commonsGiftCandidates } from "../lib/commons-images";
 
 const prisma = new PrismaClient();
-const repairKey = "gift-image-repair-20260929-v5";
+const repairKey = "gift-image-repair-20260929-v6";
 
 // Exact legacy associations identified as mismatches in the complete live
 // catalogue; no broad deletion by category, no change to verified photos.
@@ -54,9 +54,9 @@ const curated: Record<string, Attribution> = {
     imageSourceUrl:"https://www.pexels.com/photo/fresh-vegetable-in-plastic-containers-5794772/"
   },
   "Escorredor de talheres": {
-    imageUrl:"https://images.pexels.com/photos/3614/pexels-photo-3614.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageCredit:"JÉSHOOTS / Pexels",imageLicense:"CC0 / Pexels",
-    imageSourceUrl:"https://www.pexels.com/photo/utensilio-en-soporte-3614/"
+    imageUrl:"https://commons.wikimedia.org/wiki/Special:Redirect/file/Lunch-cutlery-silverware-flatware%20%2823698537584%29.jpg?width=960",
+    imageCredit:"www.Pixel.la Free Stock Photos",imageLicense:"CC0 1.0",
+    imageSourceUrl:"https://commons.wikimedia.org/wiki/File:Lunch-cutlery-silverware-flatware_(23698537584).jpg"
   },
   "Saladeira pequena": {
     imageUrl:"https://images.pexels.com/photos/6989866/pexels-photo-6989866.jpeg?auto=compress&cs=tinysrgb&w=1200",
