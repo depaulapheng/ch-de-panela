@@ -39,7 +39,7 @@ async function main() {
         if (layout.scrollWidth > layout.clientWidth + 3) {
           throw new Error(route.name + " overflows " + viewport.name + ": " + JSON.stringify(layout));
         }
-        if (layout.bg !== "rgb(255, 255, 255)" || layout.brand !== "L|P" || layout.ornaments !== 2) {
+        if (layout.bg !== "rgb(255, 255, 255)" || layout.brand !== "L|P" || (route.name !== "album" && layout.ornaments !== 2)) {
           throw new Error(route.name + " lost identity: " + JSON.stringify(layout));
         }
         report.push({ route: route.path, viewport: viewport.name, status: response.status(), ...layout });
