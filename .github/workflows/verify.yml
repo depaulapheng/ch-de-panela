@@ -1,0 +1,29 @@
+name: Verify site changes
+
+on:
+  push:
+    branches:
+      - main
+      - "review/**"
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: postgresql://postgres:password@localhost:5432/cha_test
+      APP_URL: http://localhost:3000
+      SESSION_SECRET: testing-only-secret-with-more-than-32-characters
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package.json
+      - run: npm install --no-audit --no-fund
+      - run: npx prisma generate
+      - run: npm test
+      - run: npx tsc --noEmit
+      - run: npm run build
