@@ -44,7 +44,11 @@ describe("identidade visual oficial Larissa e Pedro", () => {
     expect(theme).toContain(".hero-monogram");
     expect(theme).toContain("flex-wrap:wrap;justify-content:center");
     expect(theme).toContain("overflow-x:visible");
-    expect(art).toContain('src="/botanical-reference.webp"');
+    expect(art).toContain('src="/botanical-reference-hd.avif"');
+    const botanical = readFileSync("public/botanical-reference-hd.avif");
+    expect(botanical.length).toBeGreaterThan(10_000);
+    expect(botanical.toString("ascii", 4, 12)).toContain("ftypavif");
+    expect(refinement).toContain("filter:none;image-rendering:auto");
     expect(art).not.toContain("<svg");
     expect(refinement).toContain("background:#fff");
     expect(refinement).toContain("background:#98516f;color:#fff");
