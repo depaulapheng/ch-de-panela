@@ -216,3 +216,8 @@ a,button,input,textarea,select{transition:color .18s ease,background-color .18s 
 /* Página de presentes: não permitir que o beija-flor dispute atenção com título ou filtros. */
 .gifts-page>.romantic-scene{height:280px;opacity:.18}
 .gifts-page .ornament-bird{display:none}
+
+/* Input file invisível não pode expandir a largura do álbum em telas estreitas. */
+.photo-drop{position:relative;min-width:0}
+.photo-drop input[type=file]{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);clip-path:inset(50%);padding:0;margin:-1px;white-space:nowrap;opacity:0}
+.photo-drop:focus-within{outline:3px solid var(--focus);outline-offset:3px}
