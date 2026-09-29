@@ -12,7 +12,8 @@
     "width": 600,
     "height": 800,
     "bytes": 167426,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Espátula",
@@ -27,7 +28,8 @@
     "width": 960,
     "height": 588,
     "bytes": 30952,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Concha",
@@ -42,22 +44,24 @@
     "width": 960,
     "height": 640,
     "bytes": 100664,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Pegador de macarrão",
     "category": "Cozinha",
     "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Goodcook_Grey_Spaghetti_Spoon_%2853504577283%29.jpg/960px-Goodcook_Grey_Spaghetti_Spoon_%2853504577283%29.jpg",
     "previousUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Goodcook_Grey_Spaghetti_Spoon_%2853504577283%29.jpg/960px-Goodcook_Grey_Spaghetti_Spoon_%2853504577283%29.jpg",
-    "imageCredit": null,
-    "imageLicense": null,
+    "imageCredit": "Chris Williams",
+    "imageLicense": "CC0 1.0",
     "imageSourceUrl": "https://commons.wikimedia.org/wiki/File:Goodcook_Grey_Spaghetti_Spoon_(53504577283).jpg",
     "path": "/gift-photos/86ed84a3a23c6c5d58f4.jpg",
     "sha256": "86ed84a3a23c6c5d58f49f23061087c969f57a62fba40c002202503a807527e9",
     "width": 960,
     "height": 720,
     "bytes": 284248,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": true
   },
   {
     "name": "Fouet",
@@ -72,7 +76,8 @@
     "width": 960,
     "height": 636,
     "bytes": 37993,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Ralador",
@@ -87,7 +92,8 @@
     "width": 960,
     "height": 948,
     "bytes": 65640,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Peneira",
@@ -102,7 +108,8 @@
     "width": 960,
     "height": 643,
     "bytes": 82890,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Escorredor de macarrão",
@@ -117,7 +124,8 @@
     "width": 960,
     "height": 784,
     "bytes": 161605,
-    "replaced": true
+    "replaced": true,
+    "attributionRepair": false
   },
   {
     "name": "Tábua de corte",
@@ -132,7 +140,8 @@
     "width": 640,
     "height": 481,
     "bytes": 89953,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Abridor de latas",
@@ -147,7 +156,8 @@
     "width": 960,
     "height": 515,
     "bytes": 45721,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Saca-rolha",
@@ -162,7 +172,8 @@
     "width": 960,
     "height": 720,
     "bytes": 98833,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Tesoura de cozinha",
@@ -177,7 +188,8 @@
     "width": 960,
     "height": 537,
     "bytes": 41091,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Descanso de panela",
@@ -192,7 +204,8 @@
     "width": 1023,
     "height": 702,
     "bytes": 94833,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Luva térmica",
@@ -207,7 +220,8 @@
     "width": 960,
     "height": 640,
     "bytes": 170629,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Medidores",
@@ -222,7 +236,8 @@
     "width": 960,
     "height": 723,
     "bytes": 230207,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Forma de bolo pequena",
@@ -237,7 +252,8 @@
     "width": 960,
     "height": 652,
     "bytes": 103513,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Forma de pizza",
@@ -252,7 +268,8 @@
     "width": 960,
     "height": 720,
     "bytes": 125256,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Assadeira pequena",
@@ -267,7 +284,8 @@
     "width": 960,
     "height": 640,
     "bytes": 165834,
-    "replaced": true
+    "replaced": true,
+    "attributionRepair": false
   },
   {
     "name": "Frigideira pequena",
@@ -282,7 +300,8 @@
     "width": 960,
     "height": 720,
     "bytes": 65977,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Processador de alimentos manual",
@@ -297,7 +316,8 @@
     "width": 1200,
     "height": 1480,
     "bytes": 139166,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Chaleira",
@@ -312,7 +332,8 @@
     "width": 960,
     "height": 1280,
     "bytes": 228583,
-    "replaced": true
+    "replaced": true,
+    "attributionRepair": false
   },
   {
     "name": "Garrafa de café",
@@ -327,7 +348,8 @@
     "width": 1024,
     "height": 683,
     "bytes": 63909,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Coador de café",
@@ -342,7 +364,8 @@
     "width": 960,
     "height": 1324,
     "bytes": 126044,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Organizadores",
@@ -357,7 +380,8 @@
     "width": 1200,
     "height": 800,
     "bytes": 90907,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Potes herméticos",
@@ -372,7 +396,8 @@
     "width": 662,
     "height": 496,
     "bytes": 34635,
-    "replaced": true
+    "replaced": true,
+    "attributionRepair": false
   },
   {
     "name": "Potes para temperos",
@@ -387,7 +412,8 @@
     "width": 960,
     "height": 721,
     "bytes": 199825,
-    "replaced": true
+    "replaced": true,
+    "attributionRepair": false
   },
   {
     "name": "Potes para mantimentos",
@@ -402,7 +428,8 @@
     "width": 1200,
     "height": 1800,
     "bytes": 195743,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Porta-talheres",
@@ -417,7 +444,8 @@
     "width": 960,
     "height": 640,
     "bytes": 77093,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Organizador de gaveta",
@@ -432,7 +460,8 @@
     "width": 960,
     "height": 387,
     "bytes": 113699,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Organizador de geladeira",
@@ -447,7 +476,8 @@
     "width": 1200,
     "height": 1800,
     "bytes": 182002,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Porta-detergente",
@@ -462,7 +492,8 @@
     "width": 960,
     "height": 1024,
     "bytes": 63104,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Escorredor de talheres",
@@ -477,7 +508,8 @@
     "width": 960,
     "height": 640,
     "bytes": 90810,
-    "replaced": true
+    "replaced": true,
+    "attributionRepair": false
   },
   {
     "name": "Mesa",
@@ -492,7 +524,8 @@
     "width": 1024,
     "height": 682,
     "bytes": 138563,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Jarra",
@@ -507,7 +540,8 @@
     "width": 1024,
     "height": 683,
     "bytes": 130927,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Canecas",
@@ -522,7 +556,8 @@
     "width": 1024,
     "height": 738,
     "bytes": 59100,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Copos",
@@ -537,7 +572,8 @@
     "width": 1024,
     "height": 569,
     "bytes": 77535,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Taças",
@@ -552,7 +588,8 @@
     "width": 960,
     "height": 640,
     "bytes": 57226,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Xícaras",
@@ -567,7 +604,8 @@
     "width": 960,
     "height": 653,
     "bytes": 131874,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Travessa pequena",
@@ -582,7 +620,8 @@
     "width": 960,
     "height": 540,
     "bytes": 99313,
-    "replaced": true
+    "replaced": true,
+    "attributionRepair": false
   },
   {
     "name": "Petisqueira",
@@ -597,7 +636,8 @@
     "width": 1023,
     "height": 682,
     "bytes": 138188,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Saladeira pequena",
@@ -612,7 +652,8 @@
     "width": 960,
     "height": 957,
     "bytes": 147678,
-    "replaced": true
+    "replaced": true,
+    "attributionRepair": false
   },
   {
     "name": "Jogo americano",
@@ -627,7 +668,8 @@
     "width": 960,
     "height": 640,
     "bytes": 89451,
-    "replaced": true
+    "replaced": true,
+    "attributionRepair": false
   },
   {
     "name": "Sousplat",
@@ -642,7 +684,8 @@
     "width": 960,
     "height": 540,
     "bytes": 160306,
-    "replaced": true
+    "replaced": true,
+    "attributionRepair": false
   },
   {
     "name": "Rodo",
@@ -657,7 +700,8 @@
     "width": 960,
     "height": 1440,
     "bytes": 71672,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Pá de lixo",
@@ -672,7 +716,8 @@
     "width": 960,
     "height": 720,
     "bytes": 170735,
-    "replaced": true
+    "replaced": true,
+    "attributionRepair": false
   },
   {
     "name": "Pregadores",
@@ -687,7 +732,8 @@
     "width": 960,
     "height": 608,
     "bytes": 207869,
-    "replaced": true
+    "replaced": true,
+    "attributionRepair": false
   },
   {
     "name": "Cesto organizador pequeno",
@@ -702,7 +748,8 @@
     "width": 1000,
     "height": 666,
     "bytes": 134054,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Cesto de roupa suja",
@@ -717,7 +764,8 @@
     "width": 768,
     "height": 1024,
     "bytes": 240201,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Escova para louça",
@@ -732,7 +780,8 @@
     "width": 960,
     "height": 720,
     "bytes": 115311,
-    "replaced": true
+    "replaced": true,
+    "attributionRepair": false
   },
   {
     "name": "Escova para cantos",
@@ -747,7 +796,8 @@
     "width": 1200,
     "height": 1800,
     "bytes": 120213,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Toalha de rosto",
@@ -762,7 +812,8 @@
     "width": 1024,
     "height": 768,
     "bytes": 195113,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Tapete de banheiro",
@@ -777,7 +828,8 @@
     "width": 1200,
     "height": 1800,
     "bytes": 241929,
-    "replaced": true
+    "replaced": true,
+    "attributionRepair": false
   },
   {
     "name": "Porta-sabonete",
@@ -793,7 +845,8 @@
     "height": 1167,
     "bytes": 121896,
     "replaced": false,
-    "cacheSourceUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a7/Wall-mounted_manual_liquid_soap_dispenser_with_chrome_finish.jpg/960px-Wall-mounted_manual_liquid_soap_dispenser_with_chrome_finish.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+    "cacheSourceUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a7/Wall-mounted_manual_liquid_soap_dispenser_with_chrome_finish.jpg/960px-Wall-mounted_manual_liquid_soap_dispenser_with_chrome_finish.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "attributionRepair": false
   },
   {
     "name": "Porta-escova de dentes",
@@ -808,7 +861,8 @@
     "width": 1023,
     "height": 785,
     "bytes": 202164,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Saboneteira",
@@ -823,7 +877,8 @@
     "width": 960,
     "height": 720,
     "bytes": 74655,
-    "replaced": true
+    "replaced": true,
+    "attributionRepair": false
   },
   {
     "name": "Lixeira pequena",
@@ -838,7 +893,8 @@
     "width": 960,
     "height": 1280,
     "bytes": 197467,
-    "replaced": true
+    "replaced": true,
+    "attributionRepair": false
   },
   {
     "name": "Escova sanitária",
@@ -853,7 +909,8 @@
     "width": 960,
     "height": 451,
     "bytes": 154923,
-    "replaced": true
+    "replaced": true,
+    "attributionRepair": false
   },
   {
     "name": "Cabides",
@@ -868,7 +925,8 @@
     "width": 1200,
     "height": 1600,
     "bytes": 93976,
-    "replaced": true
+    "replaced": true,
+    "attributionRepair": false
   },
   {
     "name": "Fronhas",
@@ -883,7 +941,8 @@
     "width": 1200,
     "height": 800,
     "bytes": 68640,
-    "replaced": true
+    "replaced": true,
+    "attributionRepair": false
   },
   {
     "name": "Manta pequena",
@@ -898,7 +957,8 @@
     "width": 1024,
     "height": 712,
     "bytes": 249107,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Capas de almofada",
@@ -913,7 +973,8 @@
     "width": 1200,
     "height": 1800,
     "bytes": 342025,
-    "replaced": true
+    "replaced": true,
+    "attributionRepair": false
   },
   {
     "name": "Organizadores",
@@ -928,7 +989,8 @@
     "width": 1200,
     "height": 800,
     "bytes": 100661,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   },
   {
     "name": "Aromatizador de ambiente",
@@ -943,7 +1005,8 @@
     "width": 1200,
     "height": 1800,
     "bytes": 195292,
-    "replaced": true
+    "replaced": true,
+    "attributionRepair": false
   },
   {
     "name": "Água perfumada para tecidos",
@@ -958,7 +1021,8 @@
     "width": 560,
     "height": 1024,
     "bytes": 36047,
-    "replaced": false
+    "replaced": false,
+    "attributionRepair": false
   }
 ]
 

@@ -31,6 +31,20 @@ describe("verified catalogue photographs", () => {
     expect(giftPhotoLicenseUrl("CC BY-SA 4.0")).toBe("https://creativecommons.org/licenses/by-sa/4.0/");
     expect(giftPhotoLicenseUrl("CC BY 2.0")).toBe("https://creativecommons.org/licenses/by/2.0/");
     expect(giftPhotoLicenseUrl("Public domain")).toBeNull();
+    expect(giftPhotoLicenseUrl("BY-SA 4.0")).toBe("https://creativecommons.org/licenses/by-sa/4.0/");
+  });
+
+  it("fills the verified missing attribution without replacing the good photograph", async () => {
+    const p = photos.find(p => p.attributionRepair)!;
+    const updateMany = vi.fn(async () => ({ count: 1 }));
+    const db = { gift: {
+      findMany: vi.fn(async (args: any) => args.where.name === p.name ? [{id: "credit-only", imageUrl: p.imageUrl, imageCredit: null, imageLicense: null}] : []), updateMany
+    }};
+    await repairVerifiedGiftImages(db as any);
+    expect(updateMany).toHaveBeenCalledWith({
+      where: {id: "credit-only", active: true, imageUrl: p.imageUrl, imageCredit: null, imageLicense: null},
+      data: {imageCredit: p.imageCredit, imageLicense: p.imageLicense, imageSourceUrl: p.imageSourceUrl}
+    });
   });
 
   it("repairs only missing/exact wrong sources using compare-and-swap, and is idempotent", async () => {
