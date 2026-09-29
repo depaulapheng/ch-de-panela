@@ -121,5 +121,49 @@ export async function commonsGiftCandidates(
   }
   // Wikimedia search returns ranked matches; exact noun phrase in the file title
   // is mandatory above, so we never use a generic room/category fallback.
-  return results;
+  if(results.length)return results;
+  return openverseGiftCandidates(name,lookup,excluded);
+}
+
+async function openverseGiftCandidates(
+  name:string,lookup:NonNullable<typeof names[string]>,excluded:ReadonlySet<string>
+):Promise<CommonsProductPhoto[]>{
+  const photos:CommonsProductPhoto[]=[];
+  const seen=new Set<string>();
+  for(const query of lookup.queries.slice(0,2)){
+    const params=new URLSearchParams({q:query,license:"cc0,pdm,by,by-sa",page_size:"20",mature:"false"});
+    let response:Response;
+    try{
+      response=await fetch("https://api.openverse.org/v1/images/?"+params,{
+        signal:AbortSignal.timeout(9_000),cache:"no-store",
+        headers:{"User-Agent":"Larissa-Pedro-Gift-Registry/1.0 (open image attribution)"}
+      });
+    }catch{continue;}
+    if(!response.ok){console.warn("OPENVERSE_SEARCH_HTTP_"+response.status+" "+name);continue;}
+    const payload=await response.json() as {results?:Array<{
+      title?:string;url?:string;thumbnail?:string;license?:string;license_version?:string;
+      creator?:string;source?:string;foreign_landing_url?:string;
+      width?:number;height?:number;watermarked?:boolean;mature?:boolean
+    }>};
+    for(const item of payload.results||[]){
+      const title=item.title||"";
+      if(!isPhotoPage("File:"+title,name,lookup) || item.mature || item.watermarked)continue;
+      if((item.width||0)<450 || (item.height||0)<450)continue;
+      if(!["cc0","pdm","by","by-sa"].includes((item.license||"").toLowerCase()))continue;
+      const imageUrl=item.url||"";
+      const identity=giftImageIdentity(imageUrl);
+      if(!identity || excluded.has(identity) || seen.has(identity) || !imageUrl.startsWith("https://"))continue;
+      seen.add(identity);
+      const license=(item.license||"").toUpperCase()+(item.license_version?" "+item.license_version:"");
+      const publicDomain=["CC0","PDM"].includes((item.license||"").toUpperCase());
+      photos.push({
+        imageUrl,title,
+        imageCredit:publicDomain?null:(clean(item.creator||item.source||"Openverse")||"Openverse"),
+        imageLicense:license||null,
+        imageSourceUrl:item.foreign_landing_url?.startsWith("https://")?item.foreign_landing_url:"https://openverse.org/"
+      });
+    }
+    if(photos.length>=3)break;
+  }
+  return photos;
 }
