@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { isKnownGenericGiftImage } from "../lib/gift-image-policy";
 import { duplicateGiftImageIds } from "../lib/gift-image-audit";
+import { bundledGiftPhoto } from "../lib/gift-photo-cache";
 
 const prisma = new PrismaClient();
 
@@ -17,22 +18,25 @@ async function main() {
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }]
   });
   const duplicate = duplicateGiftImageIds(gifts);
-  let missing = 0;
+  let missing = 0, bundled = 0;
   for (const gift of gifts) {
     const isMissing = isKnownGenericGiftImage(gift.imageUrl);
     if (isMissing) missing++;
+    const localPhoto = bundledGiftPhoto(gift.imageUrl);
+    if (localPhoto) bundled++;
     console.log("GIFT_IMAGE_AUDIT " + JSON.stringify({
       id: gift.id, name: gift.name, category: gift.category.name,
       url: gift.imageUrl, source: gift.imageSourceUrl,
       credit: gift.imageCredit, license: gift.imageLicense,
-      missing: isMissing, duplicate: duplicate.has(gift.id)
+      missing: isMissing, duplicate: duplicate.has(gift.id), bundled: localPhoto
     }));
   }
   console.log("GIFT_IMAGE_AUDIT_SUMMARY " + JSON.stringify({
-    active: gifts.length, missing, duplicate: duplicate.size,
+    active: gifts.length, missing, duplicate: duplicate.size, bundled,
     googleConfigured: Boolean(process.env.GOOGLE_CSE_API_KEY && process.env.GOOGLE_CSE_CX)
   }));
 }
 main().catch(error => {
   console.warn("GIFT_IMAGE_AUDIT_FAILED", error instanceof Error ? error.name : "unknown");
 }).finally(() => prisma.$disconnect());
+

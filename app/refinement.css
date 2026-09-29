@@ -30,7 +30,7 @@ body{background:#fff}
 .hero-monogram{width:auto;height:auto;border:0;box-shadow:none;border-radius:0;background:transparent;font:500 3.2rem/1 var(--display);color:#35272d}
 .hero-monogram span{color:#b47b66;padding:0 7px}
 .hero .romantic-scene{position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none}
-.botanical-photo{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center bottom;opacity:.96;filter:none;image-rendering:auto}
+.botanical-photo{display:block;position:absolute;inset:auto auto 0 50%;width:min(100%,1600px);height:auto;max-width:1600px;transform:translateX(-50%);opacity:1;filter:none;image-rendering:auto;mask-image:url('/botanical-reference-mask.svg');mask-size:100% 100%;mask-repeat:no-repeat;-webkit-mask-image:url('/botanical-reference-mask.svg');-webkit-mask-size:100% 100%;-webkit-mask-repeat:no-repeat}
 .gifts-page>.romantic-scene{height:290px;opacity:.19}
 .gifts-page .botanical-photo{object-position:center 67%;opacity:.6}
 .count-box,.count-box:nth-child(odd),.count-box:nth-child(even){
@@ -44,6 +44,8 @@ body{background:#fff}
 .gift-card{border-color:#eee3e3;box-shadow:0 6px 18px rgba(91,53,59,.045)}
 .gift-card::before{height:2px;background:linear-gradient(90deg,#e6b9cb,#e6c6aa)}
 .gift-card:hover{box-shadow:0 12px 25px rgba(91,53,59,.08)}
+.gift-img .image-credit{max-width:calc(100% - 20px);white-space:normal;overflow-wrap:anywhere;line-height:1.35;text-align:left}
+.gift-img .image-credit a{color:inherit}
 .gift-photo-placeholder{background:linear-gradient(130deg,#fff9fb,#fffbf7)}
 .gift-photo-placeholder .placeholder-symbol{color:#bd839b}
 .badge{background:#fbf1f5;color:#79465a}
@@ -60,7 +62,7 @@ body{background:#fff}
 :where(a,button,input,textarea,select,summary):focus-visible{outline:3px solid #8d3f62;outline-offset:3px}
 @media(max-width:900px){
  .hero{min-height:740px;padding:65px 0 80px}
- .hero .botanical-photo{opacity:.78}
+ .hero .botanical-photo{opacity:1}
 }
 @media(max-width:600px){
  .hero{min-height:0;padding:48px 0 35px}
@@ -68,8 +70,9 @@ body{background:#fff}
  .hero-names{font-size:clamp(4rem,17vw,5.2rem)}
  .hero-monogram{font-size:2.5rem}
  .hero .romantic-scene{inset:auto 0 0;height:290px}
- .hero .botanical-photo{opacity:.75;object-fit:cover;object-position:center bottom}
+ .hero .botanical-photo{opacity:1}
  .gifts-page>.romantic-scene{height:180px;opacity:.1}
  .count-num,.count-box:nth-child(odd) .count-num{font-size:2.3rem}
  .btn{min-height:44px}
 }
+

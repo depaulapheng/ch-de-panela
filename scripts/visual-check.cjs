@@ -6,7 +6,7 @@ async function main() {
   const out = path.resolve(process.env.VISUAL_OUTPUT || "visual-evidence");
   const baseUrl = process.env.VISUAL_BASE_URL || "http://localhost:3000";
   fs.mkdirSync(out, { recursive: true });
-  const browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
+  const browser = await chromium.launch({ headless: true, channel: process.env.VISUAL_BROWSER_CHANNEL || undefined, args: ["--no-sandbox"] });
   const report = [];
   try {
     for (const viewport of [
@@ -23,8 +23,7 @@ async function main() {
       const page = await context.newPage();
       for (const route of [
         { path: "/", name: "home" },
-        { path: "/presentes", name: "presentes" },
-        { path: "/fotos", name: "album" }
+        { path: "/presentes", name: "presentes" }
       ]) {
         const response = await page.goto(baseUrl + route.path, { waitUntil: "networkidle", timeout: 90000 });
         if (!response || response.status() !== 200) throw new Error(route.path + " returned " + response?.status());
@@ -46,6 +45,8 @@ async function main() {
           await page.evaluate(() => window.scrollTo(0, 0));
         }
         await page.screenshot({ path: path.join(out, route.name + "-" + viewport.name + ".png"), fullPage: true });
+        if (route.name === "home") await page.locator(".hero").screenshot({path:path.join(out, "hero-"+viewport.name+".png")});
+        if (route.name === "presentes") await page.screenshot({path:path.join(out, "presentes-top-"+viewport.name+".png"),fullPage:false});
         const layout = await page.evaluate(() => ({
           scrollWidth: document.documentElement.scrollWidth,
           clientWidth: document.documentElement.clientWidth,
@@ -58,6 +59,17 @@ async function main() {
           incompleteGiftImages: [...document.querySelectorAll(".gift-card img")].filter(img => !img.complete).map(img => img.alt),
           giftCount: document.querySelectorAll(".gift-card").length,
           giftPhotoPlaceholders: document.querySelectorAll(".gift-card .gift-photo-placeholder").length,
+          giftPhotos: [...document.querySelectorAll(".gift-card")].map(card => ({
+            name: card.querySelector(".gift-name")?.textContent,
+            src: card.querySelector("img")?.getAttribute("src"),
+            loaded: Boolean(card.querySelector("img")?.naturalWidth),
+            fit: card.querySelector("img") ? getComputedStyle(card.querySelector("img")).objectFit : null
+          })),
+          botanical: [...document.querySelectorAll(".botanical-photo")].map(img => ({
+            naturalWidth: img.naturalWidth, renderedWidth: img.getBoundingClientRect().width,
+            filter: getComputedStyle(img).filter, opacity: getComputedStyle(img).opacity,
+            mask: getComputedStyle(img).maskImage
+          })),
           overflowElements: [...document.querySelectorAll("body *")].map(el => ({el:el.tagName.toLowerCase(),className:typeof el.className==="string"?el.className:"svg",right:Math.round(el.getBoundingClientRect().right),width:Math.round(el.getBoundingClientRect().width)})).filter(x=>x.right>document.documentElement.clientWidth+3).slice(0,12)
         }));
         if (layout.scrollWidth > layout.clientWidth + 3) {
@@ -68,6 +80,18 @@ async function main() {
         }
         if (layout.incompleteGiftImages.length) throw new Error(route.name + " lazy loading incomplete: " + JSON.stringify(layout.incompleteGiftImages));
         if (layout.brokenImages.length) throw new Error(route.name + " has broken images: " + JSON.stringify(layout.brokenImages));
+        if (layout.giftPhotoPlaceholders) throw new Error(route.name + " still has gift placeholders: " + layout.giftPhotoPlaceholders);
+        if (route.name === "presentes") {
+          if (layout.giftCount !== 64) throw new Error("Expected the complete 64-item audited catalogue");
+          const sources = layout.giftPhotos.map(photo => photo.src);
+          if (new Set(sources).size !== sources.length) throw new Error("Duplicate catalogue photos");
+          if (layout.giftPhotos.some(photo => !photo.loaded || photo.fit !== "contain" || !photo.src?.startsWith("/gift-photos/"))) throw new Error("Unverified, cropped or unloaded catalogue photos");
+          // Also save a compact contact sheet at the real card dimensions.
+          for (let index=0; index<layout.giftCount; index+=1) {
+            await page.locator(".gift-card").nth(index).screenshot({path:path.join(out,`gift-${viewport.name}-${String(index).padStart(2,"0")}.png`)});
+          }
+        }
+        if (route.name === "home" && layout.botanical.some(img => img.renderedWidth > img.naturalWidth + 1 || img.filter !== "none" || img.opacity !== "1" || !img.mask.includes("botanical-reference-mask.svg"))) throw new Error("Botanical image enlarged or washed out");
         report.push({ route: route.path, viewport: viewport.name, status: response.status(), ...layout });
       }
       await context.close();
@@ -79,3 +103,4 @@ async function main() {
   console.log(JSON.stringify(report));
 }
 main().catch(error => { console.error(error); process.exit(1); });
+

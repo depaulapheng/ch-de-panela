@@ -2,6 +2,7 @@ import { isIP } from "node:net";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { isKnownGenericGiftImage } from "@/lib/gift-image-policy";
+import { bundledGiftPhoto } from "@/lib/gift-photo-cache";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -31,6 +32,8 @@ export async function GET(_: Request, context: { params: Promise<{ id: string }>
   if (!original || isKnownGenericGiftImage(original) || !permittedUrl(original)) {
     return new NextResponse(null, { status: 404 });
   }
+  const bundled = bundledGiftPhoto(original);
+  if (bundled) return NextResponse.redirect(new URL(bundled, _.url));
 
   try {
     let current = original;
@@ -84,3 +87,4 @@ export async function GET(_: Request, context: { params: Promise<{ id: string }>
   }
   return new NextResponse(null, { status: 404 });
 }
+

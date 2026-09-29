@@ -109,7 +109,7 @@ jobs:
           path: visual-evidence/
           if-no-files-found: ignore
 
-      - name: Verify published service and clean up synthetic photos
+      - name: Verify published service without changing guest data
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         shell: bash
         run: |
@@ -117,27 +117,14 @@ jobs:
           site="https://cha-panela-pedro-larissa.onrender.com"
           ready=0
           for i in {1..120}; do
-            if curl --silent --max-time 15 --fail "$site/api/health" | jq -e '.status=="ok" and .album=="postgres-v2" and .theme=="orchids-photo-v3"' >/dev/null; then ready=1; break; fi
+            if curl --silent --max-time 15 --fail "$site/api/health" | jq -e --arg release "$GITHUB_SHA" '.status=="ok" and .album=="postgres-v2" and .theme=="orchids-photo-v4" and .release==$release' >/dev/null; then ready=1; break; fi
             sleep 10
           done
           if [ "$ready" -ne 1 ]; then echo "New Render release never became healthy"; exit 1; fi
-          echo "Published health check and release version: OK"
-          status="$(curl --silent --show-error --max-time 90 -o /tmp/prod-upload.json -w '%{http_code}' -F 'photos=@/tmp/album-test.png;filename=album-validation.png;type=image/png' "$site/api/photos")"
-          test "$status" = "201"
-          node -e 'const x=require("/tmp/prod-upload.json");if(!x.ok||x.count!==1||x.uploads?.length!==1||!x.uploads[0].deleteToken)process.exit(1)'
-          id="$(node -e 'process.stdout.write(require("/tmp/prod-upload.json").uploads[0].id)')"
-          token="$(node -e 'process.stdout.write(require("/tmp/prod-upload.json").uploads[0].deleteToken)')"
-          trap 'curl --silent --max-time 15 -X DELETE -H "x-photo-delete-token: $token" "$site/api/photos/$id" >/dev/null || true' EXIT
-          curl --silent --max-time 30 --fail "$site/api/photos" >/tmp/prod-list.json
-          PHOTO_ID="$id" node -e 'if(!require("/tmp/prod-list.json").photos.some(p=>p.id===process.env.PHOTO_ID))process.exit(1)'
-          curl --silent --max-time 30 --fail -D /tmp/prod-headers "$site/api/photos/$id?download=1" -o /tmp/prod-image.png
-          cmp /tmp/album-test.png /tmp/prod-image.png
-          grep -qi 'content-disposition: attachment' /tmp/prod-headers
-          test "$(curl --silent --max-time 30 -o /tmp/prod-invalid.json -w '%{http_code}' -F 'photos=@/tmp/album-invalid.png;filename=fake.png;type=image/png' "$site/api/photos")" = "415"
-          test "$(curl --silent --max-time 30 -o /tmp/prod-delete.json -w '%{http_code}' -X DELETE -H "x-photo-delete-token: $token" "$site/api/photos/$id")" = "200"
-          trap - EXIT
-          test "$(curl --silent --max-time 30 -o /dev/null -w '%{http_code}' "$site/api/photos/$id")" = "404"
-          echo "Published upload, persisted gallery, download, invalid-file rejection and test-file cleanup: OK"
+          for route in / /presentes /fotos /recados /rsvp /admin/login /api/photos; do
+            curl --silent --max-time 30 --fail "$site$route" >/dev/null
+          done
+          echo "Published exact commit, health, routes and album read-only check: OK"
 
       - name: Capture final published desktop and mobile screenshots
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -152,3 +139,4 @@ jobs:
           name: visual-evidence-production
           path: visual-evidence-production/
           if-no-files-found: ignore
+

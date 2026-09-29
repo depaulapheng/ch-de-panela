@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1131">
+  <!-- Keep the original border photography and hummingbird, excluding only
+       the reference document's colour swatches, labels and central monogram. -->
+  <defs><mask id="edges" maskUnits="userSpaceOnUse" x="0" y="0" width="1600" height="1131">
+    <path fill="white" d="M0 0H120L150 355L185 430L260 510L270 650L240 720L370 840H1600V1131H0Z"/>
+    <path fill="white" d="M1600 0H1540L1490 155L1440 410L1420 650L1380 790L1300 840H1600Z"/>
+    <path fill="white" d="M220 350H510V850H220Z"/>
+    <circle fill="black" cx="367" cy="284" r="107"/>
+  </mask></defs>
+  <rect fill="white" width="1600" height="1131" mask="url(#edges)"/>
+</svg>
+

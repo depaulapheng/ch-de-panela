@@ -3,9 +3,10 @@ import { PrismaClient } from "@prisma/client";
 import { giftImageIdentity } from "../lib/gift-image-audit";
 import { searchGoogleProductImageCandidates } from "../lib/google-images";
 import { commonsGiftCandidates } from "../lib/commons-images";
+import { repairVerifiedGiftImages } from "./repair-verified-images";
 
 const prisma = new PrismaClient();
-const repairKey = "gift-image-repair-20260929-v6";
+const repairKey = "gift-image-repair-20260929-v5";
 
 // Exact legacy associations identified as mismatches in the complete live
 // catalogue; no broad deletion by category, no change to verified photos.
@@ -133,6 +134,7 @@ async function availablePhoto(url:string):Promise<boolean> {
 }
 
 async function main() {
+  await repairVerifiedGiftImages(prisma);
   const previous=await prisma.siteContent.findUnique({where:{key:repairKey}});
   if(previous?.content==="complete"){
     console.log("GIFT_IMAGE_REPAIR_SUMMARY "+JSON.stringify({skipped:true,reason:"already_completed"}));
@@ -287,3 +289,4 @@ async function main() {
 main().catch(error=>{
   console.warn("GIFT_IMAGE_REPAIR_FAILED "+(error instanceof Error?error.name:"unknown"));
 }).finally(()=>prisma.$disconnect());
+
