@@ -1,3 +1,5 @@
+import { giftImageIdentity } from "./gift-image-audit";
+
 type GoogleImageItem = {
   link?: string;
   title?: string;
@@ -38,12 +40,16 @@ function matches(text:string, word:string){
 
 export function isRelevantGoogleProductImage(item:GoogleImageItem, name:string){
   const intent=intents[name];
+  const title=normalize(item.title||"");
   const full=normalize([item.title||"",item.snippet||"",item.image?.contextLink||""].join(" "));
   const anchors=intent?.anchors || [name];
-  if (!anchors.some(x=>matches(full,x))) return false;
+  // A generic scene or page must not pass solely because its snippet mentions the gift.
+  if (!anchors.some(x=>matches(title,x))) return false;
   if (intent?.context && !intent.context.some(x=>matches(full,x))) return false;
   const link=item.link||"";
   if (!/^https:\/\//i.test(link) || /\.(svg|gif)(?:\?|$)/i.test(link)) return false;
+  if (item.mime && !/^image\/(?:jpeg|jpg|png|webp|avif)$/i.test(item.mime)) return false;
+  if ((item.image?.width && item.image.width < 300) || (item.image?.height && item.image.height < 300)) return false;
   if (/(?:pinterest|pinimg|shutterstock|istockphoto|youtube|instagram|facebook|tiktok)\./i.test(link)) return false;
   return true;
 }
@@ -55,13 +61,15 @@ export function selectRelevantGoogleProductImage(
 ): string | null {
   return items.find(item =>
     isRelevantGoogleProductImage(item, name) &&
-    !excludedUrls.has((item.link || "").trim())
+    !excludedUrls.has((item.link || "").trim()) &&
+    !excludedUrls.has(giftImageIdentity(item.link) || "")
   )?.link?.trim() || null;
 }
 
 export async function searchGoogleProductImage(
   name: string,
-  excludedUrls: ReadonlySet<string> = new Set()
+  excludedUrls: ReadonlySet<string> = new Set(),
+  category = ""
 ): Promise<string|null> {
   const key=process.env.GOOGLE_CSE_API_KEY;
   const cx=process.env.GOOGLE_CSE_CX;
@@ -70,7 +78,7 @@ export async function searchGoogleProductImage(
   const intent=intents[name];
   const params=new URLSearchParams({
     key,cx,searchType:"image",safe:"active",num:"10",imgType:"photo",
-    q:(intent?.query || name + " produto doméstico") + " foto do produto fundo neutro"
+    q:(intent?.query || [category, name, "produto doméstico"].filter(Boolean).join(" ")) + " foto do produto fundo neutro"
   });
   const response=await fetch("https://customsearch.googleapis.com/customsearch/v1?" + params.toString(),{cache:"no-store"});
   if (!response.ok) {
