@@ -51,6 +51,9 @@ body{background:#fff}
 .gift-photo-placeholder .placeholder-symbol{color:#bd839b}
 .badge{background:#fbf1f5;color:#79465a}
 .photo-upload-card{border-top:2px solid #ddb0c2}
+.admin-layout{grid-template-columns:230px minmax(0,1fr)}
+.admin-side,.admin-main{min-width:0}
+.admin-photo-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr))}
 .admin-photo-caption{margin:12px 14px 0;font-size:.85rem;overflow-wrap:anywhere}
 .admin-album-photo .photo-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
 .admin-album-photo .admin-photo-delete{grid-column:1/-1;background:#fff;color:#a12a35;border-color:#dba6ac}
@@ -67,6 +70,7 @@ body{background:#fff}
 .gifts-heading::after{background:linear-gradient(90deg,#d86190,#dc8b51);height:2px}
 :where(a,button,input,textarea,select,summary):focus-visible{outline:3px solid #8d3f62;outline-offset:3px}
 @media(max-width:900px){
+ .admin-layout{grid-template-columns:minmax(0,1fr)}
  .hero{min-height:740px;padding:65px 0 80px}
  .hero .botanical-photo{opacity:1}
 }

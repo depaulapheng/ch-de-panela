@@ -80,6 +80,8 @@ async function main() {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.goto(base + "/admin/fotos", { waitUntil: "networkidle" });
       await target.scrollIntoViewIfNeeded();
+      const shot = `album-${viewport.name}.png`;
+      await page.screenshot({ path: path.join(out, shot), fullPage: true });
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       assert.ok(overflow <= 3, "Owner album must not overflow " + viewport.name);
       const deleteButton = target.getByRole("button", { name: "Apagar foto " + names[0], exact: true });
@@ -89,8 +91,6 @@ async function main() {
       }));
       assert.equal(boxes.length, 3);
       assert.ok(boxes[0].right <= boxes[1].left + 1 && boxes[2].top >= Math.max(boxes[0].bottom, boxes[1].bottom), "Action buttons must not overlap");
-      const shot = `album-${viewport.name}.png`;
-      await page.screenshot({ path: path.join(out, shot), fullPage: true });
       await target.screenshot({ path: path.join(out, `photo-actions-${viewport.name}.png`) });
       report.screenshots.push(shot);
       check("Visible, non-overlapping photo controls on " + viewport.name);
