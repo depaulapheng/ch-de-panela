@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
 export const MAX_GUEST_PHOTOS = 10;
 export const MAX_GUEST_PHOTO_BYTES = 8 * 1024 * 1024;
 export const MAX_GUEST_BATCH_BYTES = MAX_GUEST_PHOTOS * MAX_GUEST_PHOTO_BYTES;
@@ -36,4 +37,15 @@ export function validGuestImageSignature(bytes: Uint8Array, mimeType: string): b
 
 export function safeGuestPhotoName(name: string): string {
   return name.replace(/[\u0000-\u001f\u007f]/g, "").replace(/[^\p{L}\p{N}._ -]/gu, "-").trim().slice(0, 160) || "foto";
+}
+
+export function photoDeleteToken(id: string): string {
+  const secret = process.env.SESSION_SECRET;
+  if (!secret || secret.length < 32) throw new Error("SESSION_SECRET_NOT_CONFIGURED");
+  return createHmac("sha256", secret).update("guest-photo-delete:" + id).digest("hex");
+}
+export function validPhotoDeleteToken(id: string, candidate: string): boolean {
+  if (!/^[0-9a-f]{64}$/.test(candidate)) return false;
+  const expected = Buffer.from(photoDeleteToken(id), "hex");
+  return timingSafeEqual(expected, Buffer.from(candidate, "hex"));
 }
