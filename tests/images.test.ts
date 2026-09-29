@@ -17,6 +17,13 @@ describe("segurança das fotografias dos presentes",()=>{
     expect(isRelevantGoogleProductImage({title:"Batedor de arame whisk culinário",link:"https://example.com/whisk.jpg"},"Fouet")).toBe(true);
     expect(isRelevantGoogleProductImage({title:"Fouet perfume decoração",link:"https://example.com/perfume.jpg"},"Fouet")).toBe(false);
   });
+  it("recusa homônimos comprovadamente errados do catálogo real",()=>{
+    expect(isRelevantGoogleProductImage({title:"Kettle Pond Hossa lake",link:"https://example.com/kettle-lake.jpg"},"Chaleira")).toBe(false);
+    expect(isRelevantGoogleProductImage({title:"Chaleira elétrica inox para cozinha",link:"https://example.com/kettle.jpg"},"Chaleira")).toBe(true);
+    expect(isRelevantGoogleProductImage({title:"Lactuca sativa Salad Bowl lettuce",link:"https://example.com/lettuce.jpg"},"Saladeira pequena")).toBe(false);
+    expect(isRelevantGoogleProductImage({title:"Saladeira de vidro para mesa",link:"https://example.com/bowl.jpg"},"Saladeira pequena")).toBe(true);
+    expect(isRelevantGoogleProductImage({title:"Concha do mar para decoração",link:"https://example.com/shell.jpg"},"Concha")).toBe(false);
+  });
   it("não associa escova de louça a uma pessoa limpando janela",()=>{
     expect(isRelevantGoogleProductImage({title:"Pessoa limpando janela",link:"https://example.com/janela.jpg"},"Escova para louça")).toBe(false);
     expect(isRelevantGoogleProductImage({title:"Escova para louça de cozinha",link:"https://example.com/escova.jpg"},"Escova para louça")).toBe(true);
