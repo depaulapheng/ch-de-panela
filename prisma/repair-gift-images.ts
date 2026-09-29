@@ -197,8 +197,43 @@ async function main() {
     }
     if(!accepted)failed.push(gift.name+" [no specific accessible candidate]");
   }
+  // Replace only the exact previously audited wrong/contextual photo, and only
+  // after the new licensed product photo has been proven accessible. Atomic update
+  // retains the previous image when the media provider is unavailable.
+  const semanticSwaps: Array<{name:string;previousPart:string;photo:Attribution}> = [
+    {name:"Peneira",previousPart:"Muncaster_Mill_-_Flour_Sieve",photo:{
+      imageUrl:"https://commons.wikimedia.org/wiki/Special:Redirect/file/Kitchen-Strainer.jpg?width=960",
+      imageCredit:"Evan-Amos",imageLicense:"Public domain",
+      imageSourceUrl:"https://commons.wikimedia.org/wiki/File:Kitchen-Strainer.jpg"
+    }},
+    {name:"Medidores",previousPart:"Measuring_cups_and_corkscrew_behind_the_bar",photo:{
+      imageUrl:"https://commons.wikimedia.org/wiki/Special:Redirect/file/Measuring%20cups%20%28%C2%BC%2C%20%C2%BD%2C%201%20cup%29.jpg?width=960",
+      imageCredit:"Vimkay",imageLicense:"CC BY-SA 4.0",
+      imageSourceUrl:"https://commons.wikimedia.org/wiki/File:Measuring_cups_(%C2%BC,_%C2%BD,_1_cup).jpg"
+    }},
+    {name:"Tábua de corte",previousPart:"Seriola_on_cutting_board",photo:{
+      imageUrl:"https://commons.wikimedia.org/wiki/Special:Redirect/file/Cutting%20board.jpg?width=640",
+      imageCredit:"Rwbaldwin0728",imageLicense:"CC BY-SA 4.0",
+      imageSourceUrl:"https://commons.wikimedia.org/wiki/File:Cutting_board.jpg"
+    }}
+  ];
+  let semanticReplacements=0;
+  for(const swap of semanticSwaps){
+    if(!(await availablePhoto(swap.photo.imageUrl))) {
+      console.warn("GIFT_IMAGE_REPAIR_SWAP_SKIPPED "+swap.name);
+      continue;
+    }
+    const updated=await prisma.gift.updateMany({
+      where:{active:true,name:swap.name,imageUrl:{contains:swap.previousPart}},
+      data:swap.photo
+    });
+    semanticReplacements+=updated.count;
+    if(updated.count) console.log("GIFT_IMAGE_REPAIR_SEMANTIC_REPLACED "+JSON.stringify({
+      name:swap.name,oldMatch:swap.previousPart,source:swap.photo.imageSourceUrl
+    }));
+  }
   const current=await prisma.gift.count({where:{active:true,imageUrl:null}});
-  const outcome={active:gifts.length,invalidated,curated:curatedCount,synced,licensed:licensedCount,missing:current,failed,googleUnavailable,paused};
+  const outcome={active:gifts.length,invalidated,curated:curatedCount,synced,licensed:licensedCount,semanticReplacements,missing:current,failed,googleUnavailable,paused};
   console.log("GIFT_IMAGE_REPAIR_SUMMARY "+JSON.stringify(outcome));
   await prisma.siteContent.upsert({
     where:{key:repairKey},
