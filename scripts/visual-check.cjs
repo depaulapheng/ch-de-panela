@@ -31,7 +31,7 @@ async function main() {
         await page.locator(".botanical-photo").first().waitFor({state:"visible",timeout:12000}).catch(() => {});
         // Lazy photos outside the first fold must be genuinely loaded before
         // claiming the catalogue is visually covered in the evidence.
-        if (route.name === "presentes") {
+        if (route.name === "presentes" || route.name === "home") {
           const cards = page.locator(".gift-card");
           const total = await cards.count();
           for (let index = 0; index < total; index += 1) {
