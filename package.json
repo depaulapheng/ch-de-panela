@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "prisma generate && vitest run && next build",
     "start": "next start -p ${PORT:-3000}",
-    "start:prod": "prisma migrate deploy && prisma db seed && next start -p ${PORT:-3000}",
+    "start:prod": "prisma migrate deploy && prisma db seed && npx tsx prisma/repair-missing-gift-images.ts && npx tsx prisma/audit-gift-images.ts && next start -p ${PORT:-3000}",
     "lint": "next lint",
     "test": "vitest run",
     "seed": "prisma db seed"
