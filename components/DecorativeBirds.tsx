@@ -70,7 +70,7 @@ export function DecorativeBirds() {
         <use href="#bud" transform="translate(1360 273) rotate(36)"/>
         <use href="#bud" transform="translate(1202 543) rotate(-34)"/>
       </g>
-      <g transform="translate(336 305) rotate(-9)">
+      <g className="ornament-bird" transform="translate(336 305) rotate(-9)">
         <path d="M10 35Q-20 94 -47 130Q-22 112 -6 103Q-13 135 -32 160Q12 142 38 87Z" fill="url(#bird-wing)" opacity=".95"/>
         <path d="M12 48Q-36 -27 -9 -119Q28 -72 53 31Z" fill="url(#bird-wing)" stroke="#75617C" strokeWidth="2"/>
         <path d="M25 49Q42 -31 114 -83Q110 -2 65 66Z" fill="url(#bird-wing)" stroke="#75617C" strokeWidth="2"/>
