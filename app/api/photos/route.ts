@@ -19,7 +19,7 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
       take: 300
     });
-    const photos = dbPhotos.map(photo => ({
+    const photos: Array<{ id: string; fileName: string; mimeType: string; size: number; createdAt: Date; url: string; downloadUrl: string; source: "database" | "cloudinary" }> = dbPhotos.map(photo => ({
       ...photo,
       url: `/api/photos/${photo.id}`,
       downloadUrl: `/api/photos/${photo.id}?download=1`,
