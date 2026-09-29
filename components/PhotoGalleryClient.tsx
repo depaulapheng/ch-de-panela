@@ -2,7 +2,7 @@
 
 import { DragEvent, useEffect, useMemo, useState } from "react";
 
-type Photo = { id: string; fileName: string; mimeType: string; size: number; createdAt: string };
+type Photo = { id: string; fileName: string; mimeType: string; size: number; createdAt: string; url?: string; downloadUrl?: string };
 
 export function PhotoGalleryClient() {
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -10,11 +10,15 @@ export function PhotoGalleryClient() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
+  const [galleryError, setGalleryError] = useState("");
 
   function chooseFiles(selected: File[]) {
-    const images = selected.filter(file => file.type.startsWith("image/")).slice(0, 10);
+    const allowed = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
+    const images = selected.filter(file => allowed.has(file.type)).slice(0, 10);
     setFiles(images);
-    setMessage(selected.length > 10 ? "Selecionamos as 10 primeiras fotos deste envio." : "");
+    setMessage(selected.some(file => !allowed.has(file.type))
+      ? "Alguns arquivos não são JPG, PNG, WEBP ou HEIC/HEIF e foram ignorados."
+      : selected.length > 10 ? "Selecionamos as 10 primeiras fotos deste envio." : "");
   }
 
   function drop(event: DragEvent<HTMLLabelElement>) {
@@ -29,8 +33,9 @@ export function PhotoGalleryClient() {
       if (!response.ok) throw new Error();
       const data = await response.json();
       setPhotos(data.photos || []);
+      setGalleryError("");
     } catch {
-      setMessage("Não foi possível carregar o álbum agora.");
+      setGalleryError("Não foi possível carregar o álbum agora. Tente atualizar a galeria.");
     } finally {
       setLoading(false);
     }
@@ -38,6 +43,7 @@ export function PhotoGalleryClient() {
 
   useEffect(() => { void loadPhotos(); }, []);
   const preview = useMemo(() => files.map(file => ({ file, url: URL.createObjectURL(file) })), [files]);
+  useEffect(() => () => { preview.forEach(item => URL.revokeObjectURL(item.url)); }, [preview]);
 
   async function upload() {
     if (!files.length) return;
@@ -50,7 +56,7 @@ export function PhotoGalleryClient() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Não foi possível enviar as fotos.");
       setFiles([]);
-      setMessage(`${data.count} foto${data.count === 1 ? "" : "s"} enviada${data.count === 1 ? "" : "s"}! Já estão no álbum. 💛`);
+      setMessage(`${data.count} foto${data.count === 1 ? "" : "s"} enviada${data.count === 1 ? "" : "s"} com sucesso! 💛`);
       await loadPhotos();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Não foi possível enviar as fotos.");
@@ -67,7 +73,7 @@ export function PhotoGalleryClient() {
         <p className="muted">Selecione ou arraste até 10 fotos. Elas aparecem no álbum assim que o envio termina.</p>
       </div>
       <label className="photo-drop" onDragOver={event => event.preventDefault()} onDrop={drop}>
-        <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple onChange={event => chooseFiles(Array.from(event.target.files || []))} />
+        <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple onChange={event => { chooseFiles(Array.from(event.target.files || [])); event.target.value = ""; }} />
         <span className="photo-drop-icon">＋</span>
         <strong>Escolher ou arrastar fotos</strong>
         <span>JPG, PNG, WEBP ou HEIC · até 10 por envio · 8 MB por foto</span>
@@ -87,12 +93,13 @@ export function PhotoGalleryClient() {
         <div><div className="eyebrow">Momentos especiais</div><h2 className="title">Fotos do nosso Chá</h2></div>
         <button className="btn" onClick={loadPhotos}>Atualizar galeria</button>
       </div>
-      {loading ? <div className="card empty">Carregando fotos…</div> : photos.length === 0 ? <div className="card empty">Seja a primeira pessoa a enviar uma foto. ✨</div> : <div className="photo-grid">
+      {galleryError && <div className="notice error" role="alert">{galleryError}</div>}
+      {loading ? <div className="card empty">Carregando fotos…</div> : galleryError && !photos.length ? null : photos.length === 0 ? <div className="card empty">Seja a primeira pessoa a enviar uma foto. ✨</div> : <div className="photo-grid">
         {photos.map((photo, index) => <article className="photo-card" key={photo.id}>
-          <a href={`/api/photos/${photo.id}`} target="_blank" rel="noreferrer" className="photo-frame"><img src={`/api/photos/${photo.id}`} alt={`Foto ${index + 1} do Chá de Panela`} loading="lazy" /></a>
+          <a href={photo.url || `/api/photos/${photo.id}`} target="_blank" rel="noreferrer" className="photo-frame"><img src={photo.url || `/api/photos/${photo.id}`} alt={`Foto ${index + 1} do Chá de Panela`} loading="lazy" /></a>
           <div className="photo-actions">
-            <a className="btn btn-soft" href={`/api/photos/${photo.id}`} target="_blank" rel="noreferrer">Abrir</a>
-            <a className="btn btn-primary" href={`/api/photos/${photo.id}?download=1`}>Baixar</a>
+            <a className="btn btn-soft" href={photo.url || `/api/photos/${photo.id}`} target="_blank" rel="noreferrer">Abrir</a>
+            <a className="btn btn-primary" href={photo.downloadUrl || `/api/photos/${photo.id}?download=1`}>Baixar</a>
           </div>
         </article>)}
       </div>}
