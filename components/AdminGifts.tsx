@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { GiftImage } from "@/components/GiftImage";
 import { isKnownGenericGiftImage } from "@/lib/gift-image-policy";
+import { duplicateGiftImageIds } from "@/lib/gift-image-audit";
 
 type C={id:string;name:string};
 type Color={id:string;name:string;hex:string|null};
@@ -20,6 +21,12 @@ export function AdminGifts(){
   const [msg,setMsg]=useState("");
   const [imageMsg,setImageMsg]=useState("");
   const [imagesBusy,setImagesBusy]=useState(false);
+  const [imageFilter,setImageFilter]=useState<"all"|"missing"|"duplicate">("all");
+  const [showImageAudit,setShowImageAudit]=useState(false);
+  const activeGifts=data.gifts.filter(g=>g.active);
+  const duplicateImageIds=duplicateGiftImageIds(activeGifts);
+  const missingImageGifts=activeGifts.filter(g=>isKnownGenericGiftImage(g.imageUrl));
+  const imageAuditGifts=activeGifts.filter(g=>imageFilter==="all" || (imageFilter==="missing"?isKnownGenericGiftImage(g.imageUrl):duplicateImageIds.has(g.id)));
 
   async function load(){
     const r=await fetch("/api/admin/gifts");
@@ -89,7 +96,33 @@ export function AdminGifts(){
         <button className="btn btn-primary" onClick={add}>Adicionar presente</button>
       </div>
     </div>
-    <p className="image-sync-note">A busca usa a integração Google atual e só aplica resultados relacionados ao nome completo do presente. Revise visualmente os itens abaixo antes de considerar a lista concluída.</p>
+    <p className="image-sync-note">A busca usa a integração Google atual e preenche apenas imagens ausentes ou genéricas. Resultados automáticos são candidatos: confira se cada fotografia mostra realmente o presente. Imagens já cadastradas não são substituídas pela busca em lote.</p>
+    <div className="card image-audit-summary" aria-label="Resumo das imagens dos presentes">
+      <div><strong>{activeGifts.length}</strong><span>presentes ativos</span></div>
+      <div><strong>{missingImageGifts.length}</strong><span>sem imagem específica</span></div>
+      <div><strong>{duplicateImageIds.size}</strong><span>com imagem repetida</span></div>
+      <button type="button" className="btn" onClick={()=>setShowImageAudit(v=>!v)} aria-expanded={showImageAudit}>{showImageAudit?"Fechar auditoria visual":"Abrir auditoria visual"}</button>
+    </div>
+    {showImageAudit&&<section className="image-audit-section" aria-label="Auditoria visual dos presentes">
+      <p className="muted">Confira todos os presentes abaixo, inclusive os que possuem imagem cadastrada. Uma URL válida não garante que a fotografia corresponda ao produto. Se estiver incorreta, clique em Editar e limpe a URL para exibir o fallback até encontrar a imagem certa.</p>
+      <div className="image-audit-filters" role="group" aria-label="Filtrar imagens">
+        <button className="btn" type="button" aria-pressed={imageFilter==="all"} onClick={()=>setImageFilter("all")}>Todos ({activeGifts.length})</button>
+        <button className="btn" type="button" aria-pressed={imageFilter==="missing"} onClick={()=>setImageFilter("missing")}>Sem imagem ({missingImageGifts.length})</button>
+        <button className="btn" type="button" aria-pressed={imageFilter==="duplicate"} onClick={()=>setImageFilter("duplicate")}>Repetidas ({duplicateImageIds.size})</button>
+      </div>
+      <div className="image-audit-grid">{imageAuditGifts.map(g=><article className="card image-audit-card" key={g.id}>
+        <div className="image-audit-photo"><GiftImage src={g.imageUrl} alt={g.name} category={g.category.name}/></div>
+        <div className="image-audit-details">
+          <span className="badge">{g.category.name}</span><h3>{g.name}</h3>
+          <p className="admin-image-note">{isKnownGenericGiftImage(g.imageUrl)?"Imagem específica ausente":duplicateImageIds.has(g.id)?"Imagem repetida — conferir":"Imagem cadastrada — conferir visualmente"}</p>
+          <div className="image-audit-actions">
+            <button type="button" className="btn btn-primary" onClick={()=>edit(g)}>Editar imagem</button>
+            {g.imageUrl&&!isKnownGenericGiftImage(g.imageUrl)&&<a className="btn" href={g.imageUrl} target="_blank" rel="noopener noreferrer">Abrir original</a>}
+          </div>
+        </div>
+      </article>)}</div>
+      {!imageAuditGifts.length&&<div className="card empty">Nenhum presente neste filtro.</div>}
+    </section>}
     {imageMsg&&<div className={`notice ${imageMsg.includes("faltam")?"error":"success"}`} style={{marginBottom:14}}>{imageMsg}</div>}
 
     <div className="table-wrap">
@@ -100,7 +133,7 @@ export function AdminGifts(){
           <td>{g.category.name}</td>
           <td>{g.reservedQuantity}/{g.desiredQuantity}</td>
           <td>{g.approximateValue??"—"}</td>
-          <td><div className="admin-image-preview"><GiftImage src={g.imageUrl} alt={g.name} category={g.category.name}/></div><div className="admin-image-note">{isKnownGenericGiftImage(g.imageUrl)?"Aguardando imagem específica":data.gifts.filter(x=>x.imageUrl&&x.imageUrl===g.imageUrl).length>1?"Imagem repetida — conferir":"Imagem cadastrada — conferir"}</div></td>
+          <td><div className="admin-image-preview"><GiftImage src={g.imageUrl} alt={g.name} category={g.category.name}/></div><div className="admin-image-note">{isKnownGenericGiftImage(g.imageUrl)?"Aguardando imagem específica":duplicateImageIds.has(g.id)?"Imagem repetida — conferir":"Imagem cadastrada — conferir"}</div></td>
           <td>{g.active?"Ativo":"Arquivado"}</td>
           <td><div style={{display:"flex",gap:6}}>
             <button className="btn" onClick={()=>edit(g)}>Editar</button>

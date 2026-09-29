@@ -5,6 +5,7 @@ import { sameOrigin } from "@/lib/security";
 import { searchGoogleProductImage } from "@/lib/google-images";
 import { audit } from "@/lib/audit";
 import { genericGiftImageBases } from "@/lib/gift-image-policy";
+import { giftImageIdentity } from "@/lib/gift-image-audit";
 
 export async function POST(req: NextRequest) {
   if (!sameOrigin(req)) return NextResponse.json({ error: "Origem inválida" }, { status: 403 });
@@ -19,62 +20,55 @@ export async function POST(req: NextRequest) {
     }, { status: 503 });
   }
 
-  const body = await req.json().catch(() => ({}));
-  const onlyMissing = body.onlyMissing !== false;
-
+  // Bulk search must never overwrite a manually chosen, non-generic photograph.
+  // The client may send legacy onlyMissing:false, but this route remains non-destructive.
   const [gifts, usedImages] = await Promise.all([
     prisma.gift.findMany({
       where: {
         active: true,
-        ...(onlyMissing
-          ? { OR: [{ imageUrl: null }, ...genericGiftImageBases.map(base => ({ imageUrl: { startsWith: base } }))] }
-          : {})
+        OR: [{ imageUrl: null }, ...genericGiftImageBases.map(base => ({ imageUrl: { startsWith: base } }))]
       },
-      select: { id: true, name: true, imageUrl: true },
-      orderBy: { sortOrder: "asc" },
-      take: 80
+      select: { id: true, name: true, imageUrl: true, category: { select: { name: true } } },
+      orderBy: { sortOrder: "asc" }
     }),
     prisma.gift.findMany({
       where: { imageUrl: { not: null } },
       select: { imageUrl: true }
     })
   ]);
-  // Keep both existing images and newly selected images unique across gifts.
-  const usedUrls = new Set(usedImages.map(x => x.imageUrl?.trim()).filter((url): url is string => Boolean(url)));
+  // Distinct resize variants must not cause the same photo to be used twice.
+  const usedUrls = new Set(usedImages.map(x => giftImageIdentity(x.imageUrl)).filter((url): url is string => Boolean(url)));
 
   let updated = 0;
   const failed: string[] = [];
 
-  for (let i = 0; i < gifts.length; i += 5) {
-    const batch = gifts.slice(i, i + 5);
-    const results = await Promise.allSettled(batch.map(gift =>
-      searchGoogleProductImage(gift.name, usedUrls)
-    ));
-
-    // Process each response in sequence to prevent two gifts sharing a URL.
-    for (let index = 0; index < batch.length; index++) {
-      const result = results[index];
-      const imageUrl = result.status === "fulfilled" ? result.value : null;
-      if (!imageUrl || usedUrls.has(imageUrl)) {
-        failed.push(batch[index].name);
+  // Sequential searches prevent candidates in the same batch from picking one URL.
+  for (const gift of gifts) {
+    try {
+      const imageUrl = await searchGoogleProductImage(gift.name, usedUrls, gift.category.name);
+      const identity = giftImageIdentity(imageUrl);
+      if (!imageUrl || !identity || usedUrls.has(identity)) {
+        failed.push(gift.name);
         continue;
       }
-      try {
-        await prisma.gift.update({
-          where: { id: batch[index].id },
-          data: {
-            imageUrl,
-            // Attribution from a previous photo must never follow a new image.
-            imageCredit: null,
-            imageLicense: null,
-            imageSourceUrl: null
-          }
-        });
-        usedUrls.add(imageUrl);
-        updated++;
-      } catch {
-        failed.push(batch[index].name);
+      // Do not update if an administrator has edited this item since the initial read.
+      const current = await prisma.gift.updateMany({
+        where: { id: gift.id, imageUrl: gift.imageUrl },
+        data: {
+          imageUrl,
+          imageCredit: null,
+          imageLicense: null,
+          imageSourceUrl: null
+        }
+      });
+      if (current.count !== 1) {
+        failed.push(gift.name);
+        continue;
       }
+      usedUrls.add(identity);
+      updated++;
+    } catch {
+      failed.push(gift.name);
     }
   }
 
