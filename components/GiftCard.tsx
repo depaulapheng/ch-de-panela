@@ -2,6 +2,7 @@ import Link from "next/link";
 import { money } from "@/lib/utils";
 import { GiftImage } from "@/components/GiftImage";
 import { isKnownGenericGiftImage } from "@/lib/gift-image-policy";
+import { giftPhotoLicenseUrl } from "@/lib/gift-photo-cache";
 
 type Gift={
   id:string;name:string;description:string|null;imageUrl:string|null;imageCredit?:string|null;imageLicense?:string|null;imageSourceUrl?:string|null;approximateValue:any;
@@ -15,7 +16,10 @@ export function GiftCard({gift}:{gift:Gift}){
   return <article className="card gift-card">
     <div className="gift-img">
             <GiftImage src={gift.imageUrl} alt={gift.name} category={gift.category.name} giftId={gift.id}/>
-      {gift.imageUrl&&!isKnownGenericGiftImage(gift.imageUrl)&&gift.imageCredit&&<a className="image-credit" href={gift.imageSourceUrl||gift.imageUrl} target="_blank" rel="noreferrer">Foto: {gift.imageCredit}{gift.imageLicense?` · ${gift.imageLicense}`:""}</a>}
+      {gift.imageUrl&&!isKnownGenericGiftImage(gift.imageUrl)&&(gift.imageCredit||gift.imageLicense)&&<div className="image-credit">
+        <a href={gift.imageSourceUrl||gift.imageUrl} target="_blank" rel="noreferrer" title={gift.imageCredit||"Fonte da fotografia"}>Foto: {gift.imageCredit||"Fonte"}</a>
+        {gift.imageLicense&&<> · <a href={giftPhotoLicenseUrl(gift.imageLicense)||gift.imageSourceUrl||gift.imageUrl} target="_blank" rel="noreferrer">{gift.imageLicense}</a></>}
+      </div>}
 </div>
     <div className="gift-body">
       <span className="badge">{gift.category.name}</span>
@@ -32,3 +36,4 @@ export function GiftCard({gift}:{gift:Gift}){
     </div>
   </article>;
 }
+
