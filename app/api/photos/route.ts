@@ -108,8 +108,9 @@ export async function POST(req: NextRequest) {
 
   try {
     // createMany is atomic: a failure cannot leave a partial batch in the album.
+    const uploads = uploaded.map(photo => ({ id: photo.id, deleteToken: photoDeleteToken(photo.id) }));
     const result = await prisma.guestPhoto.createMany({ data: uploaded });
-    return NextResponse.json({ ok: true, count: result.count, uploads: uploaded.map(photo => ({ id: photo.id, deleteToken: photoDeleteToken(photo.id) })) }, { status: 201 });
+    return NextResponse.json({ ok: true, count: result.count, uploads }, { status: 201 });
   } catch {
     console.error("Unable to persist guest photo batch.");
     return NextResponse.json({ error: "Não foi possível salvar as fotos. Tente novamente." }, { status: 503 });
