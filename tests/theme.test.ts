@@ -18,7 +18,7 @@ describe("identidade visual oficial Larissa e Pedro", () => {
     for (const [name, hex] of Object.entries(official)) {
       expect(theme).toContain(`--palette-${name}:${hex};`);
     }
-    expect(theme).toContain("--palette-gradient:linear-gradient(105deg,var(--palette-magenta),var(--palette-orange));");
+    expect(theme).toContain("--palette-gradient:linear-gradient(90deg,var(--palette-magenta) 0%,var(--palette-orange) 100%);");
   });
 
   it("carrega o tema final depois dos estilos legados", () => {
@@ -35,7 +35,10 @@ describe("identidade visual oficial Larissa e Pedro", () => {
   });
 
   it("usa uma cor de ação legível e mostra a navegação mobile sem recorte", () => {
-    expect(theme).toContain("background:#b5401c");
+    expect(theme).toContain("background:var(--palette-gradient);");
+    expect(theme).toContain("--background:#ffffff;");
+    expect(theme).toContain(".gift-card::before");
+    expect(theme).toContain(".hero-monogram");
     expect(theme).toContain("flex-wrap:wrap;justify-content:center");
     expect(theme).toContain("overflow-x:visible");
   });
