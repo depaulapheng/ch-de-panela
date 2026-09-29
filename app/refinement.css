@@ -51,6 +51,11 @@ body{background:#fff}
 .gift-photo-placeholder .placeholder-symbol{color:#bd839b}
 .badge{background:#fbf1f5;color:#79465a}
 .photo-upload-card{border-top:2px solid #ddb0c2}
+.admin-photo-caption{margin:12px 14px 0;font-size:.85rem;overflow-wrap:anywhere}
+.admin-album-photo .photo-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.admin-album-photo .admin-photo-delete{grid-column:1/-1;background:#fff;color:#a12a35;border-color:#dba6ac}
+.admin-album-photo .admin-photo-delete:hover{background:#fff4f5}
+.admin-album-photo .admin-photo-delete:disabled{opacity:.6;cursor:wait}
 .photo-drop{border-color:#d8b5c3;background:#fffcfd}
 .photo-drop:hover,.photo-drop.is-dragging{background:#fff8fb;border-color:#b97896}
 .photo-drop-icon{background:#f8e5ed;color:#874c66}
@@ -77,4 +82,3 @@ body{background:#fff}
  .count-num,.count-box:nth-child(odd) .count-num{font-size:2.3rem}
  .btn{min-height:44px}
 }
-

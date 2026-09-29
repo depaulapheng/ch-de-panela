@@ -87,6 +87,29 @@ jobs:
         run: |
           npm install --no-save playwright@1.56.1
           npx playwright install --with-deps chromium
+      - name: Validate owner photo deletion in isolated Postgres and browser
+        shell: bash
+        env:
+          ADMIN_ALBUM_TEST: "1"
+        run: |
+          set -euo pipefail
+          npm start >/tmp/album-admin-server.log 2>&1 &
+          site_pid=$!
+          trap 'kill "$site_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for i in {1..45}; do
+            if curl --silent --fail http://localhost:3000/api/health >/dev/null; then ready=1; break; fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then cat /tmp/album-admin-server.log; exit 1; fi
+          node scripts/admin-album-check.cjs
+      - name: Save owner album test screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-album-evidence
+          path: admin-album-evidence/
+          if-no-files-found: ignore
       - name: Test layout in desktop and mobile browser
         shell: bash
         run: |
@@ -139,4 +162,3 @@ jobs:
           name: visual-evidence-production
           path: visual-evidence-production/
           if-no-files-found: ignore
-
