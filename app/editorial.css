@@ -212,3 +212,7 @@ a,button,input,textarea,select{transition:color .18s ease,background-color .18s 
 .gifts-page .botanical-frame{object-position:center}
 @media(max-width:900px){.hero .romantic-scene .botanical-frame{opacity:.58}}
 @media(max-width:600px){.hero .romantic-scene .botanical-frame{opacity:.4;transform:scale(1.15)}.gifts-page>.romantic-scene{opacity:.25}}
+
+/* Página de presentes: não permitir que o beija-flor dispute atenção com título ou filtros. */
+.gifts-page>.romantic-scene{height:280px;opacity:.18}
+.gifts-page .ornament-bird{display:none}
