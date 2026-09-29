@@ -29,6 +29,22 @@ async function main() {
         const response = await page.goto(baseUrl + route.path, { waitUntil: "networkidle", timeout: 90000 });
         if (!response || response.status() !== 200) throw new Error(route.path + " returned " + response?.status());
         await page.locator(".botanical-photo").first().waitFor({state:"visible",timeout:12000}).catch(() => {});
+        // Lazy photos outside the first fold must be genuinely loaded before
+        // claiming the catalogue is visually covered in the evidence.
+        if (route.name === "presentes") {
+          const cards = page.locator(".gift-card");
+          const total = await cards.count();
+          for (let index = 0; index < total; index += 1) {
+            await cards.nth(index).scrollIntoViewIfNeeded();
+            if (index % 3 === 0) await page.waitForTimeout(110);
+          }
+          await page.waitForFunction(
+            () => [...document.querySelectorAll(".gift-card img")].every(img => img.complete),
+            null, { timeout: 60000 }
+          );
+          await page.waitForTimeout(800); // allow client error fallback to render
+          await page.evaluate(() => window.scrollTo(0, 0));
+        }
         await page.screenshot({ path: path.join(out, route.name + "-" + viewport.name + ".png"), fullPage: true });
         const layout = await page.evaluate(() => ({
           scrollWidth: document.documentElement.scrollWidth,
@@ -38,6 +54,8 @@ async function main() {
           photographicArt: [...document.querySelectorAll(".botanical-photo")].every(img => img.complete && img.naturalWidth > 0),
           ornaments: document.querySelectorAll(".botanical-photo").length,
           missingVisibleImages: [...document.querySelectorAll("img")].filter(img => img.complete && !img.naturalWidth).length,
+          brokenImages: [...document.querySelectorAll("img")].filter(img => img.complete && !img.naturalWidth).map(img => ({alt:img.alt,src:img.currentSrc})),
+          incompleteGiftImages: [...document.querySelectorAll(".gift-card img")].filter(img => !img.complete).map(img => img.alt),
           giftCount: document.querySelectorAll(".gift-card").length,
           giftPhotoPlaceholders: document.querySelectorAll(".gift-card .gift-photo-placeholder").length,
           overflowElements: [...document.querySelectorAll("body *")].map(el => ({el:el.tagName.toLowerCase(),className:typeof el.className==="string"?el.className:"svg",right:Math.round(el.getBoundingClientRect().right),width:Math.round(el.getBoundingClientRect().width)})).filter(x=>x.right>document.documentElement.clientWidth+3).slice(0,12)
@@ -48,6 +66,8 @@ async function main() {
         if (layout.bg !== "rgb(255, 255, 255)" || layout.brand !== "L|P" || (route.name !== "album" && (layout.ornaments !== 1 || !layout.photographicArt))) {
           throw new Error(route.name + " lost identity: " + JSON.stringify(layout));
         }
+        if (layout.incompleteGiftImages.length) throw new Error(route.name + " lazy loading incomplete: " + JSON.stringify(layout.incompleteGiftImages));
+        if (layout.brokenImages.length) throw new Error(route.name + " has broken images: " + JSON.stringify(layout.brokenImages));
         report.push({ route: route.path, viewport: viewport.name, status: response.status(), ...layout });
       }
       await context.close();
