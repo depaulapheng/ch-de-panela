@@ -1,10 +1,11 @@
+import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { cloudinaryDownloadUrl, cloudinaryPhotoUrl, listAlbumPhotos, type AlbumPhoto } from "@/lib/cloudinary";
 import { rateLimit, sameOrigin } from "@/lib/security";
 import {
   GUEST_IMAGE_TYPES, MAX_GUEST_BATCH_BYTES, MAX_GUEST_PHOTO_BYTES,
-  MAX_GUEST_PHOTOS, safeGuestPhotoName, validGuestImageSignature
+  MAX_GUEST_PHOTOS, photoDeleteToken, safeGuestPhotoName, validGuestImageSignature
 } from "@/lib/photo-upload";
 
 export const dynamic = "force-dynamic";
@@ -84,7 +85,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Selecione entre 1 e 10 fotografias por envio." }, { status: 400 });
   }
 
-  const uploaded: { fileName: string; mimeType: string; size: number; data: Buffer }[] = [];
+  const uploaded: { id: string; fileName: string; mimeType: string; size: number; data: Buffer }[] = [];
   let total = 0;
   for (const entry of entries) {
     const file = entry as File;
@@ -102,13 +103,13 @@ export async function POST(req: NextRequest) {
     if (bytes.length !== file.size || !validGuestImageSignature(bytes, file.type)) {
       return NextResponse.json({ error: "Uma fotografia está corrompida ou não corresponde ao formato informado." }, { status: 415 });
     }
-    uploaded.push({ fileName: safeGuestPhotoName(file.name), mimeType: file.type, size: bytes.length, data: bytes });
+    uploaded.push({ id: randomUUID(), fileName: safeGuestPhotoName(file.name), mimeType: file.type, size: bytes.length, data: bytes });
   }
 
   try {
     // createMany is atomic: a failure cannot leave a partial batch in the album.
     const result = await prisma.guestPhoto.createMany({ data: uploaded });
-    return NextResponse.json({ ok: true, count: result.count }, { status: 201 });
+    return NextResponse.json({ ok: true, count: result.count, uploads: uploaded.map(photo => ({ id: photo.id, deleteToken: photoDeleteToken(photo.id) })) }, { status: 201 });
   } catch {
     console.error("Unable to persist guest photo batch.");
     return NextResponse.json({ error: "Não foi possível salvar as fotos. Tente novamente." }, { status: 503 });
