@@ -138,3 +138,17 @@ jobs:
           trap - EXIT
           test "$(curl --silent --max-time 30 -o /dev/null -w '%{http_code}' "$site/api/photos/$id")" = "404"
           echo "Published upload, persisted gallery, download, invalid-file rejection and test-file cleanup: OK"
+
+      - name: Capture final published desktop and mobile screenshots
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          VISUAL_BASE_URL: https://cha-panela-pedro-larissa.onrender.com
+          VISUAL_OUTPUT: visual-evidence-production
+        run: node scripts/visual-check.cjs
+      - name: Attach published visual evidence
+        if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-evidence-production
+          path: visual-evidence-production/
+          if-no-files-found: ignore
