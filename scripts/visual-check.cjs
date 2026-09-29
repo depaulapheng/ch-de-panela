@@ -3,7 +3,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 async function main() {
-  const out = path.resolve("visual-evidence");
+  const out = path.resolve(process.env.VISUAL_OUTPUT || "visual-evidence");
+  const baseUrl = process.env.VISUAL_BASE_URL || "http://localhost:3000";
   fs.mkdirSync(out, { recursive: true });
   const browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
   const report = [];
@@ -25,7 +26,7 @@ async function main() {
         { path: "/presentes", name: "presentes" },
         { path: "/fotos", name: "album" }
       ]) {
-        const response = await page.goto("http://localhost:3000" + route.path, { waitUntil: "networkidle" });
+        const response = await page.goto(baseUrl + route.path, { waitUntil: "networkidle", timeout: 90000 });
         if (!response || response.status() !== 200) throw new Error(route.path + " returned " + response?.status());
         await page.screenshot({ path: path.join(out, route.name + "-" + viewport.name + ".png"), fullPage: true });
         const layout = await page.evaluate(() => ({
@@ -35,6 +36,8 @@ async function main() {
           brand: document.querySelector(".brand-monogram")?.textContent,
           ornaments: document.querySelectorAll("#pink-orchid,#orange-orchid").length,
           missingVisibleImages: [...document.querySelectorAll("img")].filter(img => img.complete && !img.naturalWidth).length,
+          giftCount: document.querySelectorAll(".gift-card").length,
+          giftPhotoPlaceholders: document.querySelectorAll(".gift-card .gift-photo-placeholder").length,
           overflowElements: [...document.querySelectorAll("body *")].map(el => ({el:el.tagName.toLowerCase(),className:typeof el.className==="string"?el.className:"svg",right:Math.round(el.getBoundingClientRect().right),width:Math.round(el.getBoundingClientRect().width)})).filter(x=>x.right>document.documentElement.clientWidth+3).slice(0,12)
         }));
         if (layout.scrollWidth > layout.clientWidth + 3) {

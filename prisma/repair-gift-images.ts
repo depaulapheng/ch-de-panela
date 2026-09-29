@@ -1,0 +1,154 @@
+import { isIP } from "node:net";
+import { PrismaClient } from "@prisma/client";
+import { giftImageIdentity } from "../lib/gift-image-audit";
+import { searchGoogleProductImageCandidates } from "../lib/google-images";
+
+const prisma = new PrismaClient();
+const repairKey = "gift-image-repair-20260929-v2";
+
+// Exact legacy associations identified as mismatches in the complete live
+// catalogue; no broad deletion by category, no change to verified photos.
+const mismatches: Record<string,string> = {
+  "Chaleira": "Kettle_pond_Hossa",
+  "Saladeira pequena": "Lactuca_sativa_var._crispa",
+  "Copos": "Britannica_Glass_Venetian_Drinking_Glasses",
+  "Travessa pequena": "Serving_Dish_%28Italy%29",
+  "Sousplat": "Eisenhower_presidential_china_charger_plate",
+  "Pá de lixo": "Dustpan_made_of_a_shell_case",
+  "Assadeira pequena": "Cannoli_on_a_baking_tray",
+  "Descanso de panela": "Benjamin_Resnick%2C_Pot_Trivet"
+};
+type Attribution = {imageUrl:string; imageCredit:string|null; imageLicense:string|null; imageSourceUrl:string|null};
+const curated: Record<string, Attribution> = {
+  "Fouet": {
+    imageUrl:"https://commons.wikimedia.org/wiki/Special:Redirect/file/Fouet%20de%20cuisine.jpg?width=960",
+    imageCredit:"Clément Bucco-Lechat",imageLicense:"CC BY-SA 3.0",
+    imageSourceUrl:"https://commons.wikimedia.org/wiki/File:Fouet_de_cuisine.jpg"
+  },
+  "Concha": {
+    imageUrl:"https://commons.wikimedia.org/wiki/Special:Redirect/file/Set%20of%20serving%20ladles%20on%20stainless%20kitchen%20wall.jpg?width=960",
+    imageCredit:"Marc-Lautenbacher",imageLicense:"CC BY-SA 4.0",
+    imageSourceUrl:"https://commons.wikimedia.org/wiki/File:Set_of_serving_ladles_on_stainless_kitchen_wall.jpg"
+  }
+};
+
+function permittedUrl(value:string) {
+  try {
+    const url=new URL(value);
+    return url.protocol==="https:" && (!url.port || url.port==="443") &&
+      !isIP(url.hostname) && url.hostname!=="localhost" &&
+      !url.hostname.endsWith(".local") && !url.hostname.endsWith(".internal") &&
+      !url.username && !url.password;
+  } catch { return false; }
+}
+
+async function availablePhoto(url:string):Promise<boolean> {
+  if(!permittedUrl(url)) return false;
+  try {
+    let current=url;
+    for(let step=0;step<4;step++){
+      if(!permittedUrl(current)) return false;
+      const response=await fetch(current,{
+        method:"GET",redirect:"manual",signal:AbortSignal.timeout(5500),
+        headers:{Range:"bytes=0-2047",Accept:"image/avif,image/webp,image/jpeg,image/png"}
+      });
+      if(response.status>=300 && response.status<400){
+        const next=response.headers.get("location");
+        await response.body?.cancel();
+        if(!next) return false;
+        current=new URL(next,current).toString();
+        continue;
+      }
+      const mime=(response.headers.get("content-type")||"").toLowerCase();
+      const ok=response.ok && /^image\/(jpeg|png|webp|avif)/.test(mime);
+      await response.body?.cancel();
+      return ok;
+    }
+  }catch{}
+  return false;
+}
+
+async function main() {
+  const previous=await prisma.siteContent.findUnique({where:{key:repairKey}});
+  if(previous?.content==="complete"){
+    console.log("GIFT_IMAGE_REPAIR_SUMMARY "+JSON.stringify({skipped:true,reason:"already_completed"}));
+    return;
+  }
+  let invalidated=0,curatedCount=0,synced=0,failed:string[]=[];
+  for(const [name,part] of Object.entries(mismatches)){
+    const result=await prisma.gift.updateMany({
+      where:{name,active:true,imageUrl:{contains:part}},
+      data:{imageUrl:null,imageCredit:null,imageLicense:null,imageSourceUrl:null}
+    });
+    invalidated+=result.count;
+    if(result.count) console.log("GIFT_IMAGE_REPAIR_INVALID "+JSON.stringify({name,previousMatch:part}));
+  }
+
+  const gifts=await prisma.gift.findMany({
+    where:{active:true},select:{
+      id:true,name:true,imageUrl:true,category:{select:{name:true}}
+    },orderBy:[{sortOrder:"asc"},{name:"asc"}]
+  });
+  const used=new Set(gifts.map(g=>giftImageIdentity(g.imageUrl)).filter((x):x is string=>Boolean(x)));
+  const pending=gifts.filter(g=>!g.imageUrl);
+  console.log("GIFT_IMAGE_REPAIR_START "+JSON.stringify({active:gifts.length,pending:pending.length,invalidated,googleConfigured:!!(process.env.GOOGLE_CSE_API_KEY&&process.env.GOOGLE_CSE_CX)}));
+
+  for(const gift of pending){
+    const specified=curated[gift.name];
+    const id=giftImageIdentity(specified?.imageUrl);
+    if(specified && id && !used.has(id)){
+      const result=await prisma.gift.updateMany({
+        where:{id:gift.id,active:true,imageUrl:null},data:specified
+      });
+      if(result.count){
+        curatedCount++;
+        used.add(id);
+        console.log("GIFT_IMAGE_REPAIR_CURATED "+JSON.stringify({name:gift.name,url:specified.imageUrl}));
+        continue;
+      }
+    }
+  }
+
+  const unfilled=pending.filter(g=>!curated[g.name]);
+  const deadline=Date.now()+135_000;
+  let quotaLimited=false;
+  for(const gift of unfilled){
+    if(Date.now()>deadline){failed.push(gift.name+" [time budget]");continue;}
+    try {
+      const candidates=await searchGoogleProductImageCandidates(gift.name,gift.category.name,used);
+      let accepted=false;
+      for(const image of candidates.slice(0,5)){
+        const identity=giftImageIdentity(image.imageUrl);
+        if(!identity || used.has(identity))continue;
+        if(!(await availablePhoto(image.imageUrl)))continue;
+        const result=await prisma.gift.updateMany({
+          where:{id:gift.id,active:true,imageUrl:null},
+          data:{imageUrl:image.imageUrl,imageSourceUrl:image.imageSourceUrl,imageCredit:null,imageLicense:null}
+        });
+        if(result.count){
+          synced++;used.add(identity);accepted=true;
+          console.log("GIFT_IMAGE_REPAIR_SYNC "+JSON.stringify({name:gift.name,category:gift.category.name,title:image.title,url:image.imageUrl,source:image.imageSourceUrl}));
+          break;
+        }
+      }
+      if(!accepted)failed.push(gift.name+" [no verified candidate]");
+    }catch(error){
+      const code=error instanceof Error?error.message:"UNKNOWN";
+      failed.push(gift.name+" ["+code+"]");
+      if(/GOOGLE_IMAGE_HTTP_(403|429)|GOOGLE_IMAGE_CONFIG_MISSING/.test(code)){
+        quotaLimited=true;break;
+      }
+    }
+  }
+  const current=await prisma.gift.count({where:{active:true,imageUrl:null}});
+  const outcome={active:gifts.length,invalidated,curated:curatedCount,synced,missing:current,failed,quotaLimited};
+  console.log("GIFT_IMAGE_REPAIR_SUMMARY "+JSON.stringify(outcome));
+  await prisma.siteContent.upsert({
+    where:{key:repairKey},
+    create:{key:repairKey,content:quotaLimited?"partial":"complete"},
+    update:{content:quotaLimited?"partial":"complete"}
+  });
+}
+main().catch(error=>{
+  console.warn("GIFT_IMAGE_REPAIR_FAILED "+(error instanceof Error?error.name:"unknown"));
+}).finally(()=>prisma.$disconnect());
