@@ -54,9 +54,9 @@ const curated: Record<string, Attribution> = {
     imageSourceUrl:"https://www.pexels.com/photo/fresh-vegetable-in-plastic-containers-5794772/"
   },
   "Escorredor de talheres": {
-    imageUrl:"https://images.pexels.com/photos/4108723/pexels-photo-4108723.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageCredit:"cottonbro studio / Pexels",imageLicense:"Pexels License",
-    imageSourceUrl:"https://www.pexels.com/photo/green-plant-on-white-metal-rack-4108723/"
+    imageUrl:"https://images.pexels.com/photos/3614/pexels-photo-3614.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageCredit:"JÉSHOOTS / Pexels",imageLicense:"CC0 / Pexels",
+    imageSourceUrl:"https://www.pexels.com/photo/utensilio-en-soporte-3614/"
   },
   "Saladeira pequena": {
     imageUrl:"https://images.pexels.com/photos/6989866/pexels-photo-6989866.jpeg?auto=compress&cs=tinysrgb&w=1200",
