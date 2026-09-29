@@ -29,6 +29,18 @@ describe("curadoria aberta por significado e licença",()=>{
     mockPages({"1":info("File:Kettle pond Hossa.jpg")});
     expect(await commonsGiftCandidates("Chaleira",new Set())).toEqual([]);
   });
+  it("aceita Openverse com licença aberta, crédito e objeto exato",async()=>{
+    vi.stubGlobal("fetch",vi.fn(async(url:string)=>({
+      ok:true,
+      json:async()=>url.includes("commons.wikimedia")
+        ? {query:{pages:{}}}
+        : {results:[{title:"Kitchen sieve for flour",url:"https://example.com/sieve.jpg",license:"by",license_version:"4.0",creator:"Example author",source:"Openverse",foreign_landing_url:"https://example.com/sieve",width:1200,height:800}]}
+    })));
+    const images=await commonsGiftCandidates("Peneira",new Set());
+    expect(images).toHaveLength(1);
+    expect(images[0].imageCredit).toBe("Example author");
+    expect(images[0].imageLicense).toBe("BY 4.0");
+  });
   it("recusa licença inadequada e imagem SVG",async()=>{
     mockPages({"1":info("File:Kitchen sieve.jpg","All rights reserved"),"2":info("File:Kitchen sieve diagram.svg","CC BY 4.0","image/svg+xml")});
     expect(await commonsGiftCandidates("Peneira",new Set())).toEqual([]);
