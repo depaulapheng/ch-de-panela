@@ -110,6 +110,11 @@ async function main() {
     }
   }
 
+  if(process.env.GITHUB_ACTIONS==="true"){
+    console.log("GIFT_IMAGE_REPAIR_CI skipped external provider synchronization in test database.");
+    return;
+  }
+
   const unfilled=pending.filter(g=>!curated[g.name]);
   const deadline=Date.now()+220_000;
   let googleUnavailable=false,paused=false,commonsCount=0;
