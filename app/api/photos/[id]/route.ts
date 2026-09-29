@@ -16,6 +16,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       "content-type": photo.mimeType,
       "content-length": String(photo.size),
       "cache-control": "public, max-age=86400, immutable",
+      "x-content-type-options": "nosniff",
       ...(download ? { "content-disposition": `attachment; filename="${safeName}"` } : {})
     }
   });
