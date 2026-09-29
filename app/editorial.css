@@ -191,7 +191,7 @@ a,button,input,textarea,select{transition:color .18s ease,background-color .18s 
 /* Cor aplicada em superfícies e componentes, além dos tokens da paleta. */
 .brand{display:inline-flex;align-items:center;gap:11px}
 .brand-monogram{display:grid;place-items:center;flex:none;width:41px;height:41px;border:1px solid #ecc9d8;border-radius:50%;font:600 1.12rem/1 var(--display);color:#8f185a;background:linear-gradient(135deg,#fff3f9,#fff1e5)}
-.hero-monogram{margin:0 auto 12px;display:grid;place-items:center;width:68px;height:68px;border:1px solid #eeb9d0;border-radius:50%;background:#fff;color:#9e1d75;font:600 1.65rem/1 var(--display);box-shadow:0 7px 22px rgba(216,97,144,.1)}
+.hero-monogram{margin:0 auto 12px;display:flex;align-items:center;justify-content:center;width:68px;height:68px;border:1px solid #eeb9d0;border-radius:50%;background:#fff;color:#9e1d75;font:600 1.65rem/1 var(--display);box-shadow:0 7px 22px rgba(216,97,144,.1)}
 .hero-monogram span{color:var(--palette-orange);padding:0 2px}
 .hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--palette-gradient)}
 .hero .eyebrow{color:#932261}
