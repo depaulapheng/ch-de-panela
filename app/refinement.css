@@ -44,6 +44,7 @@ body{background:#fff}
 .gift-card{border-color:#eee3e3;box-shadow:0 6px 18px rgba(91,53,59,.045)}
 .gift-card::before{height:2px;background:linear-gradient(90deg,#e6b9cb,#e6c6aa)}
 .gift-card:hover{box-shadow:0 12px 25px rgba(91,53,59,.08)}
+.gift-img img{position:absolute;inset:0;min-width:0;min-height:0}
 .gift-img .image-credit{max-width:calc(100% - 20px);white-space:normal;overflow-wrap:anywhere;line-height:1.35;text-align:left}
 .gift-img .image-credit a{color:inherit}
 .gift-photo-placeholder{background:linear-gradient(130deg,#fff9fb,#fffbf7)}
@@ -65,6 +66,7 @@ body{background:#fff}
  .hero .botanical-photo{opacity:1}
 }
 @media(max-width:600px){
+ .share{position:static;display:flex;width:fit-content;margin:18px auto;bottom:auto;right:auto}
  .hero{min-height:0;padding:48px 0 35px}
  .hero>.container{padding-bottom:168px}
  .hero-names{font-size:clamp(4rem,17vw,5.2rem)}
