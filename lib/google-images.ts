@@ -70,6 +70,11 @@ export function isRelevantGoogleProductImage(item:GoogleImageItem, name:string){
   const anchors=intent?.anchors || [name];
   // A generic scene or page must not pass solely because its snippet mentions the gift.
   if (!anchors.some(x=>matches(title,x))) return false;
+  // Explicit homonyms seen in the live database must not be treated as products.
+  if(name==="Chaleira" && /\\b(pond|lake|lago|lagoa)\\b/.test(title)) return false;
+  if(name==="Saladeira pequena" && /\\b(lactuca|lettuce|seed|semente|muda)\\b/.test(title)) return false;
+  if(name==="Concha" && /\\b(seashell|sea shell|beach|praia|concha do mar)\\b/.test(title)) return false;
+  if(name==="Fouet" && /\\b(fuet|salami|sausage)\\b/.test(title)) return false;
   if (intent?.context && !intent.context.some(x=>matches(full,x))) return false;
   const link=item.link||"";
   if (!/^https:\/\//i.test(link) || /\.(svg|gif)(?:\?|$)/i.test(link)) return false;
