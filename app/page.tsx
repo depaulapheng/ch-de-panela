@@ -24,6 +24,7 @@ export default async function Home(){
     <section className="hero">
       <DecorativeBirds/>
       <div className="container section-heading">
+        <div className="hero-monogram" aria-hidden="true">L<span>|</span>P</div>
         <div className="eyebrow">Chá de Panela · 21 de novembro de 2026</div>
         <div className="hero-names">Larissa<br/><span className="hero-amp">&</span><br/>Pedro</div>
         <p className="hero-copy">{s?.guestMessage}</p>
