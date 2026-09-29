@@ -51,6 +51,10 @@ body{background:#fff}
 .gift-photo-placeholder .placeholder-symbol{color:#bd839b}
 .badge{background:#fbf1f5;color:#79465a}
 .photo-upload-card{border-top:2px solid #ddb0c2}
+.story-media{display:grid;align-content:start;gap:24px;min-width:0}
+.couple-portrait{margin:0 auto;width:100%;max-width:390px;padding:8px;background:#fff}
+.couple-portrait a{display:block;border-radius:18px;overflow:hidden}
+.couple-portrait img{display:block;width:100%;height:auto;border-radius:18px}
 .admin-layout{grid-template-columns:230px minmax(0,1fr)}
 .admin-side,.admin-main{min-width:0}
 .admin-photo-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr))}

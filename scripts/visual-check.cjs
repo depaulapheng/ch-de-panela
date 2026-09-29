@@ -44,6 +44,20 @@ async function main() {
           await page.waitForTimeout(800); // allow client error fallback to render
           await page.evaluate(() => window.scrollTo(0, 0));
         }
+        if (route.name === "home") {
+          const portrait = page.locator(".couple-portrait img");
+          await portrait.scrollIntoViewIfNeeded();
+          await portrait.evaluate(img => img.decode());
+          const photo = await portrait.evaluate(img => ({
+            src: img.getAttribute("src"), width: img.naturalWidth, height: img.naturalHeight,
+            renderedWidth: img.getBoundingClientRect().width, renderedHeight: img.getBoundingClientRect().height
+          }));
+          if (photo.src !== "/couple/larissa-pedro.jpg" || photo.width !== 900 || photo.height !== 1600 || Math.abs(photo.renderedWidth / photo.renderedHeight - 900 / 1600) > .002) {
+            throw new Error("Couple photo failed to load or was cropped/distorted: " + JSON.stringify(photo));
+          }
+          await page.locator(".story-section").screenshot({ path: path.join(out, "nossa-historia-" + viewport.name + ".png") });
+          await page.evaluate(() => window.scrollTo(0, 0));
+        }
         await page.screenshot({ path: path.join(out, route.name + "-" + viewport.name + ".png"), fullPage: true });
         if (route.name === "home") await page.locator(".hero").screenshot({path:path.join(out, "hero-"+viewport.name+".png")});
         if (route.name === "presentes") await page.screenshot({path:path.join(out, "presentes-top-"+viewport.name+".png"),fullPage:false});
@@ -110,4 +124,3 @@ async function main() {
   console.log(JSON.stringify(report));
 }
 main().catch(error => { console.error(error); process.exit(1); });
-

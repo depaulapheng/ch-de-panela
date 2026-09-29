@@ -66,7 +66,7 @@ export default async function Home(){
       </div>
     </section>
 
-    <section className="section story-section">
+    <section id="nossa-historia" className="section story-section">
       <div className="story-accent" aria-hidden="true">✦</div>
       <div className="container grid grid-2">
         <div>
@@ -74,13 +74,20 @@ export default async function Home(){
           <h2 className="title">Nossa história</h2>
           <p className="muted story-copy">{s?.storyText}</p>
         </div>
-        <div className="card info-card">
+        <div className="story-media">
+          <figure className="card couple-portrait">
+            <a href="/couple/larissa-pedro.jpg" target="_blank" rel="noreferrer" aria-label="Ver foto de Larissa e Pedro em tamanho completo">
+              <img src="/couple/larissa-pedro.jpg" alt="Larissa e Pedro juntos, sorrindo sob flores rosas e lanternas" width={900} height={1600} loading="lazy" />
+            </a>
+          </figure>
+          <div className="card info-card">
           <div className="eyebrow">Um carinho para nós</div>
           <h3 className="subtitle">Recados dos convidados</h3>
           {messages.length
             ?messages.map(m=><blockquote key={m.id} className="guest-quote">“{m.message}”<div className="muted">— {m.name}</div></blockquote>)
             :<p className="muted">Ainda não há recados. Você pode ser a primeira pessoa a deixar um carinho.</p>}
           <Link className="btn" href="/recados">Deixar um recado</Link>
+          </div>
         </div>
       </div>
     </section>
