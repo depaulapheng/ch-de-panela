@@ -30,7 +30,7 @@ body{background:#fff}
 .hero-monogram{width:auto;height:auto;border:0;box-shadow:none;border-radius:0;background:transparent;font:500 3.2rem/1 var(--display);color:#35272d}
 .hero-monogram span{color:#b47b66;padding:0 7px}
 .hero .romantic-scene{position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none}
-.botanical-photo{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center bottom;opacity:.93;filter:saturate(.91)}
+.botanical-photo{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center bottom;opacity:.96;filter:none;image-rendering:auto}
 .gifts-page>.romantic-scene{height:290px;opacity:.19}
 .gifts-page .botanical-photo{object-position:center 67%;opacity:.6}
 .count-box,.count-box:nth-child(odd),.count-box:nth-child(even){
