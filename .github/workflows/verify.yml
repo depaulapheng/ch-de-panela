@@ -11,6 +11,20 @@ jobs:
   checks:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: cha_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d cha_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       DATABASE_URL: postgresql://postgres:password@localhost:5432/cha_test
       APP_URL: http://localhost:3000
@@ -24,6 +38,41 @@ jobs:
           cache-dependency-path: package.json
       - run: npm install --no-audit --no-fund
       - run: npx prisma generate
+      - run: npx prisma migrate deploy
       - run: npm test
       - run: npx tsc --noEmit
       - run: npm run build
+      - name: Validate real album HTTP flow against persistent Postgres
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import struct, zlib
+          def chunk(tag, payload):
+              return struct.pack(">I",len(payload))+tag+payload+struct.pack(">I",zlib.crc32(tag+payload)&0xffffffff)
+          header=struct.pack(">IIBBBBB",1,1,8,6,0,0,0)
+          pixels=zlib.compress(bytes([0,240,100,160,255]))
+          with open("/tmp/album-test.png","wb") as f:
+              f.write(b"\x89PNG\r\n\x1a\n"+chunk(b"IHDR",header)+chunk(b"IDAT",pixels)+chunk(b"IEND",b""))
+          PY
+          npm start >/tmp/album-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for i in {1..40}; do
+            if curl --silent --fail http://localhost:3000/api/health >/tmp/album-health.json; then ready=1; break; fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then cat /tmp/album-server.log; exit 1; fi
+          test "$(curl --silent -o /tmp/album-upload.json -w '%{http_code}' -F 'photos=@/tmp/album-test.png;type=image/png' http://localhost:3000/api/photos)" = "201"
+          node -e 'const d=require("/tmp/album-upload.json"); if(!d.ok || d.count!==1)process.exit(1)'
+          curl --silent --fail http://localhost:3000/api/photos >/tmp/album-list.json
+          photo_id="$(node -e 'const d=require("/tmp/album-list.json"); if(!Array.isArray(d.photos)||d.photos.length<1)process.exit(1); process.stdout.write(d.photos[0].id)')"
+          curl --silent --fail -D /tmp/album-download-headers "http://localhost:3000/api/photos/$photo_id?download=1" -o /tmp/album-download.png
+          cmp /tmp/album-test.png /tmp/album-download.png
+          grep -qi 'content-disposition: attachment' /tmp/album-download-headers
+          test "$(curl --silent -o /tmp/album-multiple.json -w '%{http_code}' -F 'photos=@/tmp/album-test.png;type=image/png' -F 'photos=@/tmp/album-test.png;type=image/png' http://localhost:3000/api/photos)" = "201"
+          node -e 'if(require("/tmp/album-multiple.json").count!==2)process.exit(1)'
+          printf '<script>not an image</script>' >/tmp/album-invalid.png
+          test "$(curl --silent -o /tmp/album-invalid.json -w '%{http_code}' -F 'photos=@/tmp/album-invalid.png;type=image/png' http://localhost:3000/api/photos)" = "415"
+          node -e 'const {PrismaClient}=require("@prisma/client"); const db=new PrismaClient(); db.guestPhoto.count().then(n=>{if(n<3)process.exitCode=1;console.log("Persisted test photos:",n)}).finally(()=>db.$disconnect())'
