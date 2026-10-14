@@ -250,7 +250,7 @@ function chooseGift(id) {
 }
 function rsvp() {
   pageShell("Confirme sua presença","Chá de Panela · 21.11.2026","Sua resposta ajuda a preparar tudo com carinho.",
-    '<div class="panel" style="max-width:680px"><form id="rsvp-form" class="form">'+
+    '<div class="card info-card" style="max-width:680px"><form id="rsvp-form" class="form">'+
     '<div class="field"><label for="rsvp-name">Seu nome *</label><input id="rsvp-name" name="name" required minlength="2" maxlength="120" autocomplete="name"></div>'+
     '<div class="field"><label for="rsvp-phone">WhatsApp / telefone</label><input id="rsvp-phone" name="phone" inputmode="tel" autocomplete="tel" maxlength="30"></div>'+
     '<div class="field"><label for="attending">Você poderá comparecer?</label><select id="attending" name="attending"><option value="yes">Sim, estarei lá 💛</option><option value="no">Infelizmente não poderei</option></select></div>'+
@@ -282,7 +282,7 @@ function updateRsvpPolicy() {
 function recados() {
   const quotes=quoteHTML();
   pageShell("Mural de recados","Com carinho","Deixe uma mensagem para Larissa e Pedro.",
-    '<div class="recados-layout"><div class="stack" id="quotes">'+quotes+'</div>'+
+    '<div class="grid grid-2 recados-layout"><div class="stack" id="quotes">'+quotes+'</div>'+
     '<div class="panel"><h3>Deixe um recado ♡</h3><form class="form" id="message-form"><div class="field"><label for="message-name">Seu nome</label><input id="message-name" required minlength="2" maxlength="120" name="name"></div><div class="field"><label for="message-text">Mensagem</label><textarea id="message-text" required minlength="3" maxlength="1000" name="message"></textarea></div><div id="message-status" aria-live="polite"></div><button class="pill">Enviar carinho</button></form></div></div>');
   main.querySelector("#message-form").addEventListener("submit",async e=>{
     e.preventDefault();const f=e.currentTarget,button=f.querySelector("button"),status=f.querySelector("#message-status");
@@ -293,12 +293,12 @@ function recados() {
   });
 }
 function quoteHTML() {
-  return data ? (data.messages.length ? data.messages.map(m=>'<article class="quote"><p>“'+esc(m.message)+'”</p><small>— '+esc(m.name)+'</small></article>').join("") : notice("Ainda não há recados. Seja a primeira pessoa a enviar um carinho.")) : (refreshing?waitCard():problemCard());
+  return data ? (data.messages.length ? data.messages.map(m=>'<article class="card info-card"><p>“'+esc(m.message)+'”</p><small>— '+esc(m.name)+'</small></article>').join("") : notice("Ainda não há recados. Seja a primeira pessoa a enviar um carinho.")) : (refreshing?waitCard():problemCard());
 }
 function photos() {
   pageShell("Fotos do Chá de Panela","Nosso álbum compartilhado","Envie e baixe as fotos deste dia especial.",
-    '<div class="panel"><h3>Compartilhe suas fotos</h3><p>Até 10 fotos por envio · 8 MB por foto · JPG, PNG, WEBP ou HEIC.</p>'+
-    '<label class="drop">Escolher fotos<input id="photos-files" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple></label>'+
+    '<div class="card photo-upload-card"><h3 class="subtitle">Compartilhe suas fotos</h3><p>Até 10 fotos por envio · 8 MB por foto · JPG, PNG, WEBP ou HEIC.</p>'+
+    '<label class="drop photo-drop">Escolher fotos<input id="photos-files" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple></label>'+
     '<p id="photos-selected" aria-live="polite"></p><div id="upload-preview" class="photo-grid"></div><div id="photo-status" aria-live="polite"></div><button class="pill" id="photo-send" disabled>Enviar para o álbum</button></div>'+
     '<div class="row-actions"><h2>Galeria</h2><button class="pill outlined" data-action="refresh-photos">Atualizar galeria</button></div><div id="photos-content">'+waitCard("Carregando fotos do álbum…")+'</div>');
   const input=main.querySelector("#photos-files"), button=main.querySelector("#photo-send");
