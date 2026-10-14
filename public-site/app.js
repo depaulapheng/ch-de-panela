@@ -79,6 +79,47 @@ function updateHome() {
   if (venue && event.venue) venue.textContent = event.venue;
   if (address && event.address) address.textContent = event.address;
   if (map && safeHref(event.mapsUrl)) { map.href = event.mapsUrl; map.hidden = false; }
+  for (const [id, value] of [
+    ["guest-message", event.guestMessage],
+    ["home-text", event.homeText],
+    ["story-copy", event.storyText],
+    ["pix-recipient", event.pixRecipient]
+  ]) {
+    const el = main.querySelector("#" + id);
+    if (el && value) el.textContent = value;
+  }
+  const preview = main.querySelector("#recados-preview-list");
+  if (preview && Array.isArray(data.messages)) {
+    preview.innerHTML = data.messages.length
+      ? data.messages.slice(0, 3).map(m => '<article class="quote"><p>“' + esc(m.message) +
+        '”</p><small>— ' + esc(m.name) + '</small></article>').join("")
+      : '<article class="quote"><p>Ainda não há recados. Você pode ser a primeira pessoa a deixar um carinho.</p></article>';
+  }
+  const pix = main.querySelector("#pix-section");
+  if (pix && event.pixEnabled && (event.pixKey || event.pixRecipient)) {
+    pix.hidden = false;
+    const key = pix.querySelector("#pix-key");
+    if (key) { key.textContent = event.pixKey ? "Chave PIX: " + event.pixKey : ""; key.hidden = !event.pixKey; }
+  }
+  updateCountdowns();
+}
+function updateCountdowns() {
+  const settings = data?.event || {};
+  for (const [id, rawDate] of [
+    ["countdown-shower", settings.showerDate || "2026-11-21T22:00:00Z"],
+    ["countdown-wedding", settings.weddingDate || "2027-03-20T18:00:00Z"]
+  ]) {
+    const el = main.querySelector("#" + id);
+    if (!el) continue;
+    const timestamp = new Date(rawDate).getTime();
+    if (!Number.isFinite(timestamp)) continue;
+    const remainingSeconds = Math.max(0, Math.floor((timestamp - Date.now()) / 1000));
+    if (remainingSeconds === 0) { el.textContent = "Chegou o grande dia! 💛"; continue; }
+    const days = Math.floor(remainingSeconds / 86400);
+    const hours = Math.floor((remainingSeconds % 86400) / 3600);
+    const minutes = Math.floor((remainingSeconds % 3600) / 60);
+    el.textContent = days + " dias · " + hours + " horas · " + minutes + " minutos";
+  }
 }
 function remaining(g) {
   return g.acceptsInstallments
@@ -291,7 +332,7 @@ function render() {
   const path=decodeURI(location.pathname);
   main.className="";
   document.title="Chá de Panela | Larissa e Pedro";
-  if (path==="/") {main.innerHTML=home;updateHome();}
+  if (path==="/") {main.innerHTML=home;updateHome();updateCountdowns();}
   else if(path==="/presentes.html")gifts();
   else if(path==="/rsvp.html")rsvp();
   else if(path==="/recados.html")recados();
@@ -305,6 +346,7 @@ document.addEventListener("click",e=>{
   const btn=e.target.closest("[data-action]");
   if (btn) {
     if(btn.dataset.action==="retry")onRetry();
+    if(btn.dataset.action==="share") { const url=location.origin+"/"; if (navigator.share) navigator.share({ title:"Chá de Panela Larissa e Pedro",url }).catch(()=>{}); else navigator.clipboard?.writeText(url).then(()=>alert("Link do convite copiado!")).catch(()=>alert(url)); }
     if(btn.dataset.action==="refresh-photos")loadPhotos();
     return;
   }
@@ -316,4 +358,5 @@ document.addEventListener("click",e=>{
 window.addEventListener("popstate",()=>{main.querySelector("#gift-modal")?.remove();currentGift=null;render();});
 render();
 loading = boot(); // non-blocking; static invitation was already painted by HTML/CSS
+setInterval(updateCountdowns, 60000);
 })();
