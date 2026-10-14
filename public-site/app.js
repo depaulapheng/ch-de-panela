@@ -4,7 +4,7 @@
 const API = window.__PUBLIC_API_BASE__ || "https://cha-panela-pedro-larissa.onrender.com";
 const main = document.getElementById("page-content");
 const home = main.innerHTML;
-let data = null, loading = null, photoMap = {}, sector = "all", photoList = null, photoFiles = [], currentGift = null, refreshing = false;
+let data = null, loading = null, photoMap = {}, sector = "all", photoList = null, photoFiles = [], currentGift = null, refreshing = true;
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const money = amount => amount == null || amount === "" ? "" : new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(Number(amount));
 const safeHref = input => {
@@ -54,7 +54,7 @@ async function boot(force = false) {
     data = payload;
     photoMap = map;
     refreshing = false;
-    render();
+    if (!(location.pathname === "/rsvp" && document.querySelector("#rsvp-name")?.value)) render();
     return data;
   }).catch(() => {
     refreshing = false;
@@ -139,7 +139,7 @@ function chooseGift(id) {
     '<label class="check"><input name="confirm" type="checkbox" required>Confirmo que desejo reservar este presente. Se não puder comprar, cancelarei pelo meu link pessoal.</label>'+
     '<div id="gift-status" aria-live="polite"></div><button class="pill" id="gift-submit">Confirmar reserva 🎁</button></form></div>';
   document.body.append(overlay);
-  const close = () => { overlay.remove(); currentGift = null; history.replaceState(null,"","/presentes"); document.body.style.overflow=""; };
+  const close = () => { overlay.remove(); document.removeEventListener("keydown",onKey); currentGift = null; history.replaceState(null,"","/presentes"); document.body.style.overflow=""; };
   overlay.querySelector("#close-gift").addEventListener("click",close);
   overlay.addEventListener("click",e=>{if(e.target===overlay)close();});
   const onKey=e=>{if(e.key==="Escape"){close();document.removeEventListener("keydown",onKey);}};
@@ -205,7 +205,7 @@ function recados() {
   const quotes = data ? (data.messages.length ? data.messages.map(m=>
     '<article class="quote"><p>“'+esc(m.message)+'”</p><small>— '+esc(m.name)+'</small></article>').join("") : notice("Ainda não há recados. Seja a primeira pessoa a enviar um carinho.")) : (refreshing?waitCard():problemCard());
   pageShell("Mural de recados","Com carinho","Deixe uma mensagem para Larissa e Pedro.",
-    '<div class="twocol" style="align-items:start;grid-template-columns:1fr 1fr"><div class="stack" id="quotes">'+quotes+'</div>'+
+    '<div class="recados-layout"><div class="stack" id="quotes">'+quotes+'</div>'+
     '<div class="panel"><h3>Deixe um recado ♡</h3><form class="form" id="message-form"><div class="field"><label for="message-name">Seu nome</label><input id="message-name" required minlength="2" maxlength="120" name="name"></div><div class="field"><label for="message-text">Mensagem</label><textarea id="message-text" required minlength="3" maxlength="1000" name="message"></textarea></div><div id="message-status" aria-live="polite"></div><button class="pill">Enviar carinho</button></form></div></div>');
   main.querySelector("#message-form").addEventListener("submit",async e=>{
     e.preventDefault();const f=e.currentTarget,button=f.querySelector("button"),status=f.querySelector("#message-status");
