@@ -41,10 +41,10 @@ const assert = require("node:assert/strict");
       })
     }));
     await page.route("http://localhost:3000/api/reservations", route => route.fulfill({
-      status: route.request().method() === "OPTIONS" ? 204 : 201, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": url },
+      status: route.request().method() === "OPTIONS" ? 204 : 201, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": url, "Access-Control-Allow-Methods": "GET,POST,OPTIONS", "Access-Control-Allow-Headers": "Content-Type" },
       body: JSON.stringify({ ok: true, token: "test-token-not-persisted" })
     }));
-    await page.goto(url + "/presentes", { waitUntil: "domcontentloaded" });
+    await page.goto(url + "/presentes.html", { waitUntil: "domcontentloaded" });
     await page.getByRole("button", { name: "Quero dar este presente" }).waitFor({ timeout: 12000 });
     await page.getByRole("button", { name: "Quero dar este presente" }).click();
     await page.locator("#guest-name").fill("Pessoa Teste");
@@ -54,7 +54,7 @@ const assert = require("node:assert/strict");
     await page.getByText("Presente reservado!").waitFor({ timeout: 12000 });
     const urlText = await page.locator("#personal-link").inputValue();
     assert.ok(urlText.startsWith(url + "/minha-reserva.html?token="));
-    await page.goto(url + "/rsvp", { waitUntil: "domcontentloaded" });
+    await page.goto(url + "/rsvp.html", { waitUntil: "domcontentloaded" });
     await page.locator("#companions").waitFor({ timeout: 12000 });
     assert.ok((await page.evaluate(() => document.documentElement.scrollWidth)) <= 392, "RSVP overflows mobile screen");
     console.log("Public static site: backend-offline landing, deep routes, mobile and mock reservation PASS");
