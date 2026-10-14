@@ -21,7 +21,7 @@ export async function GET() {
       prisma.gift.findMany({
         where: { active: true },
         select: {
-          id: true, name: true, description: true, imageUrl: true,
+          id: true, name: true, description: true, note: true, imageUrl: true,
           imageCredit: true, imageLicense: true, imageSourceUrl: true,
           approximateValue: true, desiredQuantity: true, reservedQuantity: true,
           priority: true, purchaseUrl: true, brand: true, model: true,

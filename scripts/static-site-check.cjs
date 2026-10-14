@@ -35,7 +35,7 @@ const assert = require("node:assert/strict");
         messages: [],
         gifts: [{
           id: "test-gift-1", name: "Jogo de pratos", imageUrl: null, category: { name: "Cozinha", slug: "cozinha" },
-          colors: [], installments: [], desiredQuantity: 1, reservedQuantity: 0,
+          colors: [{color:{name:"Branco",hex:"#ffffff"}}], imageCredit:"Fotógrafo", imageLicense:"CC BY", imageSourceUrl:"https://commons.wikimedia.org/", installments: [], desiredQuantity: 1, reservedQuantity: 0,
           priority: "NORMAL", acceptsInstallments: false, approximateValue: null, purchaseUrl: null
         }]
       })
@@ -46,6 +46,8 @@ const assert = require("node:assert/strict");
     }));
     await page.goto(url + "/presentes.html", { waitUntil: "domcontentloaded" });
     await page.getByRole("button", { name: "Quero dar este presente" }).waitFor({ timeout: 12000 });
+    assert.match(await page.locator(".gift-body").innerText(), /Cores preferidas: Branco/);
+    assert.match(await page.locator(".gift-body").innerText(), /Fotógrafo.*CC BY/);
     await page.getByRole("button", { name: "Quero dar este presente" }).click();
     await page.locator("#guest-name").fill("Pessoa Teste");
     await page.locator("#guest-phone").fill("31999999999");

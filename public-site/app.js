@@ -5,6 +5,7 @@ const API = window.__PUBLIC_API_BASE__ || "https://cha-panela-pedro-larissa.onre
 const main = document.getElementById("page-content");
 const home = main.innerHTML;
 let data = null, loading = null, photoMap = {}, sector = "all", photoList = null, photoFiles = [], currentGift = null, refreshing = true;
+let clearPhotoPreviews=()=>{};
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const money = amount => amount == null || amount === "" ? "" : new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(Number(amount));
 const safeHref = input => {
@@ -58,18 +59,20 @@ async function boot(force = false) {
     if (location.pathname === "/") updateHome();
     else if (location.pathname === "/presentes.html") gifts();
     else if (location.pathname === "/rsvp.html") updateRsvpPolicy();
-    else if (location.pathname === "/recados.html" && !main.querySelector("#message-name")?.value && !main.querySelector("#message-text")?.value) recados();
+    else if (location.pathname === "/recados.html") { const quotes=main.querySelector("#quotes"); if(quotes)quotes.innerHTML=quoteHTML(); }
     return data;
   }).catch(() => {
     refreshing = false;
     if (!data && location.pathname === "/presentes.html") gifts();
+    if (!data && location.pathname === "/recados.html") { const quotes=main.querySelector("#quotes"); if(quotes)quotes.innerHTML=problemCard(); }
     return null;
   }).finally(() => { loading = null; });
   return loading;
 }
 function onRetry() {
   refreshing = true;
-  render();
+  if(location.pathname==="/presentes.html")gifts();
+  const quotes=main.querySelector("#quotes");if(quotes)quotes.innerHTML=waitCard();
   boot(true);
 }
 function updateHome() {
@@ -139,14 +142,17 @@ function imageFor(g) {
 }
 function giftHTML(g) {
   const rem = remaining(g), img = imageFor(g), cost = money(g.approximateValue);
+  const credit=safeHref(g.imageSourceUrl||g.imageUrl);
   const status = rem <= 0 ? "Já escolhido 💛" : g.acceptsInstallments ? rem + " cotas disponíveis" :
     Number(g.desiredQuantity) > 1 ? rem + " unidades disponíveis" : "Disponível";
   return '<article class="gift"><div class="gift-visual">'+
     (img ? '<img src="'+esc(img)+'" loading="lazy" decoding="async" alt="'+esc(g.name)+'">' : '<span class="empty-art">'+esc(g.name)+'</span>') +
-    '</div><div class="gift-body"><span class="tag">'+esc(g.category?.name||"Presente")+'</span><h3>'+esc(g.name)+'</h3>'+
+    '</div><div class="gift-body">'+(credit&&(g.imageCredit||g.imageLicense)?'<small><a class="quiet-link" href="'+credit+'" target="_blank" rel="noopener noreferrer">Foto: '+esc(g.imageCredit||"Fonte")+(g.imageLicense?' · '+esc(g.imageLicense):'')+'</a></small>':'')+'<span class="tag">'+esc(g.category?.name||"Presente")+'</span><h3>'+esc(g.name)+'</h3>'+
     (g.description ? '<p>'+esc(g.description)+'</p>' : "") +
     (cost ? '<strong>'+cost+' <small>aprox.</small></strong>' : "") +
     (g.brand ? '<p>Sugestão: '+esc(g.brand)+(g.model ? " · "+esc(g.model) : "")+'</p>' : "") +
+    (g.colors?.length ? '<p>Cores preferidas: '+g.colors.map(c=>esc(c.color.name)).join(", ")+'</p>' : "") +
+    (g.note ? '<p>'+esc(g.note)+'</p>' : "") +
     '<p class="availability '+(rem<=0?"out":"")+'">'+esc(status)+'</p>'+
     '<button class="pill" data-gift="'+esc(g.id)+'" '+(rem <= 0 ? "disabled" : "")+'>'+ (rem <= 0 ? "Indisponível" : "Quero dar este presente") +'</button></div></article>';
 }
@@ -253,8 +259,7 @@ function updateRsvpPolicy() {
   if(fields)fields.hidden=!data?.event?.rsvpAllowCompanions;
 }
 function recados() {
-  const quotes = data ? (data.messages.length ? data.messages.map(m=>
-    '<article class="quote"><p>“'+esc(m.message)+'”</p><small>— '+esc(m.name)+'</small></article>').join("") : notice("Ainda não há recados. Seja a primeira pessoa a enviar um carinho.")) : (refreshing?waitCard():problemCard());
+  const quotes=quoteHTML();
   pageShell("Mural de recados","Com carinho","Deixe uma mensagem para Larissa e Pedro.",
     '<div class="recados-layout"><div class="stack" id="quotes">'+quotes+'</div>'+
     '<div class="panel"><h3>Deixe um recado ♡</h3><form class="form" id="message-form"><div class="field"><label for="message-name">Seu nome</label><input id="message-name" required minlength="2" maxlength="120" name="name"></div><div class="field"><label for="message-text">Mensagem</label><textarea id="message-text" required minlength="3" maxlength="1000" name="message"></textarea></div><div id="message-status" aria-live="polite"></div><button class="pill">Enviar carinho</button></form></div></div>');
@@ -266,25 +271,34 @@ function recados() {
     }catch(err){status.innerHTML=notice(err.message,"error");}finally{button.disabled=false;}
   });
 }
+function quoteHTML() {
+  return data ? (data.messages.length ? data.messages.map(m=>'<article class="quote"><p>“'+esc(m.message)+'”</p><small>— '+esc(m.name)+'</small></article>').join("") : notice("Ainda não há recados. Seja a primeira pessoa a enviar um carinho.")) : (refreshing?waitCard():problemCard());
+}
 function photos() {
   pageShell("Fotos do Chá de Panela","Nosso álbum compartilhado","Envie e baixe as fotos deste dia especial.",
     '<div class="panel"><h3>Compartilhe suas fotos</h3><p>Até 10 fotos por envio · 8 MB por foto · JPG, PNG, WEBP ou HEIC.</p>'+
     '<label class="drop">Escolher fotos<input id="photos-files" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple></label>'+
-    '<p id="photos-selected" aria-live="polite"></p><div id="photo-status" aria-live="polite"></div><button class="pill" id="photo-send" disabled>Enviar para o álbum</button></div>'+
+    '<p id="photos-selected" aria-live="polite"></p><div id="upload-preview" class="photo-grid"></div><div id="photo-status" aria-live="polite"></div><button class="pill" id="photo-send" disabled>Enviar para o álbum</button></div>'+
     '<div class="row-actions"><h2>Galeria</h2><button class="pill outlined" data-action="refresh-photos">Atualizar galeria</button></div><div id="photos-content">'+waitCard("Carregando fotos do álbum…")+'</div>');
   const input=main.querySelector("#photos-files"), button=main.querySelector("#photo-send");
-  input.addEventListener("change",()=>{
-    photoFiles=Array.from(input.files).slice(0,10);
-    main.querySelector("#photos-selected").textContent=photoFiles.length+" foto(s) selecionada(s)";
+  let previewUrls=[];
+  clearPhotoPreviews=()=>{previewUrls.forEach(url=>URL.revokeObjectURL(url));previewUrls=[];};
+  const chooseFiles=selected=>{
+    previewUrls.forEach(url=>URL.revokeObjectURL(url));previewUrls=[];
+    photoFiles=selected.filter(f=>["image/jpeg","image/png","image/webp","image/heic","image/heif"].includes(f.type)&&f.size>0&&f.size<=8*1024*1024).slice(0,10);
+    main.querySelector("#photos-selected").textContent=photoFiles.length+" foto(s) selecionada(s)"+(photoFiles.length!==selected.length?". Arquivos fora dos limites foram ignorados.":"");
+    main.querySelector("#upload-preview").innerHTML=photoFiles.map(f=>{const url=URL.createObjectURL(f);previewUrls.push(url);return '<img src="'+url+'" alt="Prévia de '+esc(f.name)+'" style="width:100%;height:140px;object-fit:contain">';}).join("");
     button.disabled=!photoFiles.length;
-  });
+  };
+  input.addEventListener("change",()=>chooseFiles(Array.from(input.files)));
+  const drop=main.querySelector(".drop");drop.addEventListener("dragover",e=>e.preventDefault());drop.addEventListener("drop",e=>{e.preventDefault();chooseFiles(Array.from(e.dataTransfer.files));});
   button.addEventListener("click",async()=>{
     if(!photoFiles.length)return;button.disabled=true;
     const body=new FormData();photoFiles.forEach(f=>body.append("photos",f));
     const status=main.querySelector("#photo-status");status.innerHTML=notice("Enviando fotos. Aguarde a confirmação.");
     try{
       const result=await fetchJSON("/api/photos",{method:"POST",body},msg=>status.innerHTML=notice(msg),100000);
-      status.innerHTML=notice(result.count+" foto(s) enviada(s) com sucesso!","success");input.value="";photoFiles=[];main.querySelector("#photos-selected").textContent="";await loadPhotos();
+      status.innerHTML=notice(result.count+" foto(s) enviada(s) com sucesso!","success");input.value="";chooseFiles([]);await loadPhotos();
     }catch(err){status.innerHTML=notice(err.message,"error");}finally{button.disabled=!photoFiles.length;}
   });
   loadPhotos();
@@ -339,6 +353,7 @@ function privacidade() {
     '<div class="panel" style="max-width:740px"><p>Nome, contato e confirmação de presença ficam disponíveis apenas para os organizadores. Pessoas que escolhem presentes recebem um link individual para consultar e cancelar suas reservas.</p><p>Outros visitantes veem somente a disponibilidade dos presentes, sem identificar quem reservou. Os recados enviados ao mural e as fotos compartilhadas são públicos para os visitantes.</p><p>Evite publicar informações sensíveis em recados ou fotografias. Para solicitar alterações ou exclusão de dados, entre em contato com os noivos.</p></div>');
 }
 function render() {
+  clearPhotoPreviews();
   const path=decodeURI(location.pathname);
   main.className="";
   document.title="Chá de Panela | Larissa e Pedro";
@@ -350,13 +365,14 @@ function render() {
   else if(path==="/privacidade.html")privacidade();
   else if(path==="/minha-reserva.html")myReservation(new URLSearchParams(location.search).get("token")||"");
   else pageShell("Página não encontrada","Ops!","Este endereço não existe.",'<a class="pill" href="/" data-link>Voltar para o convite</a>');
+  if(["/","/presentes.html","/rsvp.html","/recados.html"].includes(path)&&!data&&!loading)boot();
   window.scrollTo({top:0,behavior:"instant"});
 }
 document.addEventListener("click",e=>{
   const btn=e.target.closest("[data-action]");
   if (btn) {
     if(btn.dataset.action==="retry")onRetry();
-    if(btn.dataset.action==="share") { const url=location.origin+"/"; if (navigator.share) navigator.share({ title:"Chá de Panela Larissa e Pedro",url }).catch(()=>{}); else navigator.clipboard?.writeText(url).then(()=>alert("Link do convite copiado!")).catch(()=>alert(url)); }
+    if(btn.dataset.action==="share") { const url=location.origin+"/"; if (navigator.share) navigator.share({ title:"Chá de Panela Larissa e Pedro",url }).catch(()=>{}); else if(navigator.clipboard) navigator.clipboard.writeText(url).then(()=>alert("Link do convite copiado!")).catch(()=>alert(url)); else alert(url); }
     if(btn.dataset.action==="refresh-photos")loadPhotos();
     return;
   }
@@ -367,6 +383,6 @@ document.addEventListener("click",e=>{
 });
 window.addEventListener("popstate",()=>{document.querySelector("#gift-modal")?.remove();document.body.style.overflow="";currentGift=null;render();});
 render();
-loading = boot(); // non-blocking; static invitation was already painted by HTML/CSS
+// render() starts only the data request needed by the current guest route.
 setInterval(updateCountdowns, 60000);
 })();
