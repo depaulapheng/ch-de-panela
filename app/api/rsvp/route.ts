@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       // Lock by normalized identity to serialize simultaneous submissions without
       // adding a unique constraint to an existing database with unknown duplicates.
       const identity = phone ? "phone:" + phone : "name:" + name.trim().toLocaleLowerCase("pt-BR");
-      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${identity}))`;
+      await tx.$queryRaw`SELECT 1 AS locked FROM pg_advisory_xact_lock(hashtext(${identity}))`;
       const existing = await tx.rsvp.findFirst({
         where: phone ? { phone } : { name: { equals: name.trim(), mode: "insensitive" }, phone: null },
         select: { id: true }
