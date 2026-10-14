@@ -8,6 +8,12 @@ for (const name of ["index.html", "styles.css", "app.js"]) {
 for (const route of ["presentes", "rsvp", "recados", "fotos", "privacidade", "minha-reserva"]) {
   await copyFile(join(root, "public-site", "index.html"), join(out, route + ".html"));
 }
+for (const name of ["botanical-reference-original.jpg", "botanical-reference-mask.svg"]) {
+  await copyFile(join(root, "public", name), join(out, name));
+}
+for (const [source, output] of [["globals.css","original-globals.css"],["editorial.css","original-editorial.css"],["refinement.css","original-refinement.css"]]) {
+  await copyFile(join(root, "app", source), join(out, output));
+}
 for (const dir of ["couple", "gift-photos"]) {
   await cp(join(root, "public", dir), join(out, dir), { recursive: true });
 }
