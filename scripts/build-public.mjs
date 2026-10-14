@@ -2,8 +2,11 @@ import { mkdir, cp, copyFile, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 const root = process.cwd(), out = join(root, "dist-public");
 await mkdir(out, { recursive: true });
-for (const name of ["index.html", "styles.css", "app.js", "_redirects"]) {
+for (const name of ["index.html", "styles.css", "app.js"]) {
   await copyFile(join(root, "public-site", name), join(out, name));
+}
+for (const route of ["presentes", "rsvp", "recados", "fotos", "privacidade", "minha-reserva"]) {
+  await copyFile(join(root, "public-site", "index.html"), join(out, route + ".html"));
 }
 for (const dir of ["couple", "gift-photos"]) {
   await cp(join(root, "public", dir), join(out, dir), { recursive: true });
