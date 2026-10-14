@@ -23,7 +23,7 @@ No Render, crie um **Static Site** gratuito conectado ao **mesmo repositório**,
 - Root directory: raiz do repositório
 - `PUBLIC_API_BASE` opcional no build: `https://cha-panela-pedro-larissa.onrender.com` (padrão já no script)
 - Não há credenciais do banco no Static Site.
-- Os deep links funcionam pela regra em `public-site/_redirects`.
+- As rotas públicas têm arquivos HTML concretos gerados (`/presentes.html`, `/rsvp.html`, `/recados.html`, `/fotos.html`, `/privacidade.html`, `/minha-reserva.html?token=...`) para não depender de rewrites indisponíveis no conector do Render.
 
 **Depois de descobrir a URL exata do Static Site**, configure *somente* no Web Service já existente uma variável adicional `PUBLIC_SITE_ORIGIN=https://<subdominio-do-site>.onrender.com` (sem path), preservando todas as outras variáveis. Isso libera CORS **apenas** para as rotas públicas explicitamente declaradas em `middleware.ts`. Não configure origem `*`; as rotas `/api/admin/` continuam fora desse CORS. Os cookies de login permanecem vinculados ao serviço administrativo.
 
