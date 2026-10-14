@@ -12,8 +12,25 @@ const assert = require("node:assert/strict");
       body: JSON.stringify({ error: "Servidor indisponível para este teste" })
     }));
     await page.goto(url + "/", { waitUntil: "domcontentloaded" });
-    assert.match(await page.locator("h1").innerText(), /Larissa.*Pedro/s);
+    assert.match(await page.locator(".hero-names").innerText(), /Larissa.*Pedro/s);
     assert.match(await page.locator("#event-venue").innerText(), /Reserva Real/);
+    // CDN and original Next frontend must share the exact hero artwork, typography and class names.
+    await page.locator(".botanical-photo").evaluate(img => img.decode());
+    assert.equal(await page.locator(".brand-monogram").innerText(),"L|P");
+    assert.match(await page.locator(".hero-names").innerText(),/Larissa.*Pedro/s);
+    const theme = await page.evaluate(() => ({
+      mask: getComputedStyle(document.querySelector(".botanical-photo")).maskImage,
+      background: getComputedStyle(document.body).backgroundColor,
+      count: document.querySelectorAll("#countdown-shower .count-box").length,
+      image: document.querySelector(".botanical-photo").getAttribute("src"),
+      header: document.querySelector(".nav") !== null
+    }));
+    assert.ok(theme.mask.includes("botanical-reference-mask.svg"), "Floral mask from original site missing");
+    assert.equal(theme.image,"/botanical-reference-original.jpg");
+    assert.equal(theme.background,"rgb(255, 255, 255)");
+    assert.equal(theme.count,4);
+    assert.ok(theme.header,"Original navigation missing");
+
     const initial = await page.evaluate(() => ({ width: document.documentElement.scrollWidth, screen: innerWidth }));
     assert.ok(initial.width <= initial.screen + 2, "Home overflows mobile screen");
     await page.goto(url + "/presentes.html", { waitUntil: "domcontentloaded" });
@@ -47,7 +64,7 @@ const assert = require("node:assert/strict");
     await page.goto(url + "/presentes.html", { waitUntil: "domcontentloaded" });
     await page.getByRole("button", { name: "Quero dar este presente" }).waitFor({ timeout: 12000 });
     assert.match(await page.locator(".gift-body").innerText(), /Cores preferidas: Branco/);
-    assert.match(await page.locator(".gift-body").innerText(), /Fotógrafo.*CC BY/);
+    assert.match(await page.locator(".gift-card").innerText(), /Fotógrafo.*CC BY/);
     await page.getByRole("button", { name: "Quero dar este presente" }).click();
     await page.locator("#guest-name").fill("Pessoa Teste");
     await page.locator("#guest-phone").fill("31999999999");

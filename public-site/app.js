@@ -26,7 +26,14 @@ function waitCard(text = "Buscando informações atualizadas…") {
 }
 function problemCard() { return '<div class="panel">'+notice("Não foi possível consultar os dados agora. O site continua aberto; tente novamente em instantes.","error")+'<button class="pill secondary" data-action="retry">Tentar novamente</button></div>'; }
 function pageShell(title, eyebrow, desc, contents) {
-  main.innerHTML = h(title, eyebrow, desc)+'<section class="shell content-section">'+contents+'</section>';
+  const giftsPage=title==="Lista de presentes", photosPage=title==="Fotos do Chá de Panela";
+  const narrow=title==="Confirme sua presença"||title==="Minha reserva";
+  const art=giftsPage?'<div class="romantic-scene" aria-hidden="true"><img class="botanical-photo" src="/botanical-reference-original.jpg" alt="" width="1600" height="1131"></div>':"";
+  main.innerHTML='<section class="section'+(giftsPage?" gifts-page":photosPage?" photo-page":"")+'">'+art+
+    '<div class="container"'+(narrow?' style="max-width:680px"':"")+'>'+
+    '<div class="eyebrow">'+esc(eyebrow)+'</div><h1 class="title">'+esc(title)+'</h1>'+
+    '<p class="muted" style="max-width:720px">'+esc(desc)+'</p>'+contents+
+    '</div></section>';
 }
 function fetchJSON(path, options = {}, onWait, timeout = 65000) {
   const controller = new AbortController();
@@ -75,6 +82,20 @@ function onRetry() {
   const quotes=main.querySelector("#quotes");if(quotes)quotes.innerHTML=waitCard();
   boot(true);
 }
+function originalGiftCard(g) {
+  const left=remaining(g), img=imageFor(g), value=money(g.approximateValue);
+  const src=safeHref(g.imageSourceUrl||g.imageUrl);
+  return '<article class="card gift-card"><div class="gift-img">'+
+    (img?'<img src="'+esc(img)+'" alt="'+esc(g.name)+'" loading="lazy">':'<div class="gift-photo-placeholder">'+esc(g.name)+'</div>')+
+    (src&&(g.imageCredit||g.imageLicense)?'<div class="image-credit"><a href="'+src+'" target="_blank" rel="noopener noreferrer">Foto: '+esc(g.imageCredit||"Fonte")+(g.imageLicense?' · '+esc(g.imageLicense):"")+'</a></div>':"")+
+    '</div><div class="gift-body"><span class="badge">'+esc(g.category?.name||"Presente")+'</span>'+
+    '<div class="gift-name">'+esc(g.name)+'</div>'+
+    (g.description?'<div class="muted">'+esc(g.description)+'</div>':"")+
+    (value?'<div><strong>'+value+'</strong> <span class="muted" style="font-size:12px">aprox.</span></div>':"")+
+    (g.colors?.length?'<div><div class="muted" style="font-size:12px">Cores preferidas</div><div class="color-row">'+g.colors.map(x=>'<span class="dot" title="'+esc(x.color.name)+'" style="background:'+esc(x.color.hex||"#eee")+'"></span>').join("")+'</div></div>':"")+
+    '<div class="'+(left>0?"status-ok":"status-out")+'">'+(left>0?"Disponível":"Já escolhido 💛")+'</div>'+
+    '<div style="margin-top:auto">'+(left>0?'<a class="btn btn-primary" style="width:100%" href="/presentes.html?reservar='+encodeURIComponent(g.id)+'" data-link>Quero dar este presente</a>':'<button class="btn" style="width:100%" disabled>Indisponível</button>')+'</div></div></article>';
+}
 function updateHome() {
   if (!data || !data.event) return;
   const event = data.event;
@@ -98,10 +119,11 @@ function updateHome() {
   const preview = main.querySelector("#recados-preview-list");
   if (preview && Array.isArray(data.messages)) {
     preview.innerHTML = data.messages.length
-      ? data.messages.slice(0, 3).map(m => '<article class="quote"><p>“' + esc(m.message) +
-        '”</p><small>— ' + esc(m.name) + '</small></article>').join("")
-      : '<article class="quote"><p>Ainda não há recados. Você pode ser a primeira pessoa a deixar um carinho.</p></article>';
+      ? data.messages.slice(0, 6).map(m => '<blockquote class="guest-quote">“'+esc(m.message)+'”<div class="muted">— '+esc(m.name)+'</div></blockquote>').join("")
+      : '<p class="muted">Ainda não há recados. Você pode ser a primeira pessoa a deixar um carinho.</p>';
   }
+  const giftsPreview=main.querySelector("#home-gifts-list");
+  if(giftsPreview && Array.isArray(data.gifts)) giftsPreview.innerHTML=data.gifts.slice(0,6).map(originalGiftCard).join("") || '<div class="card empty">Nenhum presente disponível.</div>';
   const pix = main.querySelector("#pix-section");
   if (pix && event.pixEnabled && (event.pixKey || event.pixRecipient)) {
     pix.hidden = false;
@@ -120,12 +142,11 @@ function updateCountdowns() {
     if (!el) continue;
     const timestamp = new Date(rawDate).getTime();
     if (!Number.isFinite(timestamp)) continue;
-    const remainingSeconds = Math.max(0, Math.floor((timestamp - Date.now()) / 1000));
-    if (remainingSeconds === 0) { el.textContent = "Chegou o grande dia! 💛"; continue; }
-    const days = Math.floor(remainingSeconds / 86400);
-    const hours = Math.floor((remainingSeconds % 86400) / 3600);
-    const minutes = Math.floor((remainingSeconds % 3600) / 60);
-    el.textContent = days + " dias · " + hours + " horas · " + minutes + " minutos";
+    const seconds = Math.max(0, Math.floor((timestamp - Date.now()) / 1000));
+    const values = [Math.floor(seconds / 86400), Math.floor((seconds % 86400) / 3600), Math.floor((seconds % 3600) / 60), seconds % 60];
+    const boxes = el.querySelectorAll(".count-num");
+    if (boxes.length === 4) boxes.forEach((box, i) => {box.textContent = String(values[i]).padStart(2,"0");});
+    else el.textContent = values[0] + " dias · " + values[1] + " horas · " + values[2] + " minutos";
   }
 }
 function remaining(g) {
@@ -141,20 +162,20 @@ function imageFor(g) {
   return safeHref(original) ? original : "";
 }
 function giftHTML(g) {
-  const rem = remaining(g), img = imageFor(g), cost = money(g.approximateValue);
-  const credit=safeHref(g.imageSourceUrl||g.imageUrl);
-  const status = rem <= 0 ? "Já escolhido 💛" : g.acceptsInstallments ? rem + " cotas disponíveis" :
-    Number(g.desiredQuantity) > 1 ? rem + " unidades disponíveis" : "Disponível";
-  return '<article class="gift"><div class="gift-visual">'+
-    (img ? '<img src="'+esc(img)+'" loading="lazy" decoding="async" alt="'+esc(g.name)+'">' : '<span class="empty-art">'+esc(g.name)+'</span>') +
-    '</div><div class="gift-body">'+(credit&&(g.imageCredit||g.imageLicense)?'<small><a class="quiet-link" href="'+credit+'" target="_blank" rel="noopener noreferrer">Foto: '+esc(g.imageCredit||"Fonte")+(g.imageLicense?' · '+esc(g.imageLicense):'')+'</a></small>':'')+'<span class="tag">'+esc(g.category?.name||"Presente")+'</span><h3>'+esc(g.name)+'</h3>'+
-    (g.description ? '<p>'+esc(g.description)+'</p>' : "") +
-    (cost ? '<strong>'+cost+' <small>aprox.</small></strong>' : "") +
-    (g.brand ? '<p>Sugestão: '+esc(g.brand)+(g.model ? " · "+esc(g.model) : "")+'</p>' : "") +
-    (g.colors?.length ? '<p>Cores preferidas: '+g.colors.map(c=>esc(c.color.name)).join(", ")+'</p>' : "") +
-    (g.note ? '<p>'+esc(g.note)+'</p>' : "") +
-    '<p class="availability '+(rem<=0?"out":"")+'">'+esc(status)+'</p>'+
-    '<button class="pill" data-gift="'+esc(g.id)+'" '+(rem <= 0 ? "disabled" : "")+'>'+ (rem <= 0 ? "Indisponível" : "Quero dar este presente") +'</button></div></article>';
+  const rem=remaining(g),img=imageFor(g),cost=money(g.approximateValue),credit=safeHref(g.imageSourceUrl||g.imageUrl);
+  const status=rem<=0?"Já escolhido 💛":g.acceptsInstallments?rem+" cotas disponíveis":g.desiredQuantity>1?g.reservedQuantity+" de "+g.desiredQuantity+" escolhidos · faltam "+rem:"Disponível";
+  return '<article class="card gift-card"><div class="gift-img">'+
+    (img?'<img src="'+esc(img)+'" loading="lazy" decoding="async" alt="'+esc(g.name)+'">':'<div class="gift-photo-placeholder">'+esc(g.name)+'</div>')+
+    (credit&&(g.imageCredit||g.imageLicense)?'<div class="image-credit"><a href="'+credit+'" target="_blank" rel="noopener noreferrer">Foto: '+esc(g.imageCredit||"Fonte")+(g.imageLicense?' · '+esc(g.imageLicense):"")+'</a></div>':"")+
+    '</div><div class="gift-body"><span class="badge">'+esc(g.category?.name||"Presente")+'</span>'+
+    '<div class="gift-name">'+esc(g.name)+'</div>'+
+    (g.description?'<p class="muted" style="margin:0">'+esc(g.description)+'</p>':"")+
+    (cost?'<div><strong>'+cost+'</strong> <span class="muted" style="font-size:12px">aprox.</span></div>':"")+
+    (g.acceptsInstallments?'<div class="notice"><strong>'+rem+'</strong> de '+esc(g.installmentCount)+' cotas disponíveis</div>':"")+
+    (g.colors?.length?'<div><div class="muted" style="font-size:12px">Cores preferidas: '+g.colors.map(x=>esc(x.color.name)).join(", ")+'</div><div class="color-row">'+g.colors.map(x=>'<span class="dot" title="'+esc(x.color.name)+'" style="background:'+esc(x.color.hex||"#eee")+'"></span>').join("")+'</div></div>':"")+
+    '<div class="'+(rem>0?"status-ok":"status-out")+'">'+esc(status)+'</div>'+
+    (g.brand?'<div class="muted" style="font-size:13px">Sugestão: '+esc(g.brand)+(g.model?' · '+esc(g.model):"")+'</div>':"")+
+    '<div style="margin-top:auto"><button class="btn btn-primary" style="width:100%" data-gift="'+esc(g.id)+'" '+(rem>0?"":"disabled")+'>'+(rem>0?"Quero dar este presente":"Indisponível")+'</button></div></div></article>';
 }
 function gifts() {
   let inner;
@@ -162,9 +183,9 @@ function gifts() {
   else {
     const filtered = data.gifts.filter(g => sector === "all" || g.category?.slug === sector)
       .sort((a,b) => ["HIGH","NORMAL","OPTIONAL"].indexOf(a.priority)-["HIGH","NORMAL","OPTIONAL"].indexOf(b.priority));
-    inner = '<div class="filters"><label for="sector">Filtrar por setor</label><select id="sector" aria-label="Filtrar por setor"><option value="all">Todos os setores</option>'+
+    inner = '<div class="sector-filter"><label for="sector">Setor</label><select class="select" id="sector" aria-label="Filtrar por setor"><option value="all">Todos os setores</option>'+
       data.categories.map(c => '<option value="'+esc(c.slug)+'" '+(sector===c.slug?"selected":"")+'>'+esc(c.name)+'</option>').join("")+'</select></div>'+
-      (filtered.length ? '<div class="grid">'+filtered.map(giftHTML).join("")+'</div>' : notice("Não há presentes neste setor."));
+      (filtered.length ? '<div class="grid grid-3">'+filtered.map(giftHTML).join("")+'</div>' : notice("Não há presentes neste setor."));
   }
   pageShell("Lista de presentes","Para o nosso lar","Escolha com carinho. Nenhum cadastro é necessário e a disponibilidade é verificada ao reservar.",inner);
   main.querySelector("#sector")?.addEventListener("change",e=>{sector=e.target.value;gifts();});
@@ -229,7 +250,7 @@ function chooseGift(id) {
 }
 function rsvp() {
   pageShell("Confirme sua presença","Chá de Panela · 21.11.2026","Sua resposta ajuda a preparar tudo com carinho.",
-    '<div class="panel" style="max-width:680px"><form id="rsvp-form" class="form">'+
+    '<div class="card info-card" style="max-width:680px"><form id="rsvp-form" class="form">'+
     '<div class="field"><label for="rsvp-name">Seu nome *</label><input id="rsvp-name" name="name" required minlength="2" maxlength="120" autocomplete="name"></div>'+
     '<div class="field"><label for="rsvp-phone">WhatsApp / telefone</label><input id="rsvp-phone" name="phone" inputmode="tel" autocomplete="tel" maxlength="30"></div>'+
     '<div class="field"><label for="attending">Você poderá comparecer?</label><select id="attending" name="attending"><option value="yes">Sim, estarei lá 💛</option><option value="no">Infelizmente não poderei</option></select></div>'+
@@ -261,7 +282,7 @@ function updateRsvpPolicy() {
 function recados() {
   const quotes=quoteHTML();
   pageShell("Mural de recados","Com carinho","Deixe uma mensagem para Larissa e Pedro.",
-    '<div class="recados-layout"><div class="stack" id="quotes">'+quotes+'</div>'+
+    '<div class="grid grid-2 recados-layout"><div class="stack" id="quotes">'+quotes+'</div>'+
     '<div class="panel"><h3>Deixe um recado ♡</h3><form class="form" id="message-form"><div class="field"><label for="message-name">Seu nome</label><input id="message-name" required minlength="2" maxlength="120" name="name"></div><div class="field"><label for="message-text">Mensagem</label><textarea id="message-text" required minlength="3" maxlength="1000" name="message"></textarea></div><div id="message-status" aria-live="polite"></div><button class="pill">Enviar carinho</button></form></div></div>');
   main.querySelector("#message-form").addEventListener("submit",async e=>{
     e.preventDefault();const f=e.currentTarget,button=f.querySelector("button"),status=f.querySelector("#message-status");
@@ -272,12 +293,12 @@ function recados() {
   });
 }
 function quoteHTML() {
-  return data ? (data.messages.length ? data.messages.map(m=>'<article class="quote"><p>“'+esc(m.message)+'”</p><small>— '+esc(m.name)+'</small></article>').join("") : notice("Ainda não há recados. Seja a primeira pessoa a enviar um carinho.")) : (refreshing?waitCard():problemCard());
+  return data ? (data.messages.length ? data.messages.map(m=>'<article class="card info-card"><p>“'+esc(m.message)+'”</p><small>— '+esc(m.name)+'</small></article>').join("") : notice("Ainda não há recados. Seja a primeira pessoa a enviar um carinho.")) : (refreshing?waitCard():problemCard());
 }
 function photos() {
   pageShell("Fotos do Chá de Panela","Nosso álbum compartilhado","Envie e baixe as fotos deste dia especial.",
-    '<div class="panel"><h3>Compartilhe suas fotos</h3><p>Até 10 fotos por envio · 8 MB por foto · JPG, PNG, WEBP ou HEIC.</p>'+
-    '<label class="drop">Escolher fotos<input id="photos-files" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple></label>'+
+    '<div class="card photo-upload-card"><h3 class="subtitle">Compartilhe suas fotos</h3><p>Até 10 fotos por envio · 8 MB por foto · JPG, PNG, WEBP ou HEIC.</p>'+
+    '<label class="drop photo-drop">Escolher fotos<input id="photos-files" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple></label>'+
     '<p id="photos-selected" aria-live="polite"></p><div id="upload-preview" class="photo-grid"></div><div id="photo-status" aria-live="polite"></div><button class="pill" id="photo-send" disabled>Enviar para o álbum</button></div>'+
     '<div class="row-actions"><h2>Galeria</h2><button class="pill outlined" data-action="refresh-photos">Atualizar galeria</button></div><div id="photos-content">'+waitCard("Carregando fotos do álbum…")+'</div>');
   const input=main.querySelector("#photos-files"), button=main.querySelector("#photo-send");
@@ -384,5 +405,5 @@ document.addEventListener("click",e=>{
 window.addEventListener("popstate",()=>{document.querySelector("#gift-modal")?.remove();document.body.style.overflow="";currentGift=null;render();});
 render();
 // render() starts only the data request needed by the current guest route.
-setInterval(updateCountdowns, 60000);
+setInterval(updateCountdowns, 1000);
 })();

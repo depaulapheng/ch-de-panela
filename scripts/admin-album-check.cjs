@@ -69,7 +69,7 @@ async function main() {
     await page.route(`**/api/admin/photos/${targetId}`, route => route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "Não foi possível apagar a foto. Tente novamente." }) }));
     page.once("dialog", dialog => dialog.accept());
     await target.getByRole("button", { name: "Apagar foto " + names[0], exact: true }).click();
-    await page.getByRole("alert").waitFor();
+    await page.locator(".notice.error[role=alert]").waitFor();
     assert.equal(await target.count(), 1);
     assert.ok(await db.guestPhoto.findUnique({ where: { id: targetId } }));
     await page.unroute(`**/api/admin/photos/${targetId}`);
