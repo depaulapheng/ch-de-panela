@@ -33,6 +33,8 @@ jobs:
       DATABASE_URL: postgresql://postgres:password@localhost:5432/cha_test
       APP_URL: http://localhost:3000
       SESSION_SECRET: testing-only-secret-with-more-than-32-characters
+      PUBLIC_SITE_ORIGIN: http://localhost:4173
+      PUBLIC_API_BASE: http://localhost:3000
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -43,6 +45,8 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: npx prisma generate
       - run: npx prisma migrate deploy
+      - run: npm run build:public
+      - run: node --check dist-public/app.js
       - run: npm test
       - run: npx tsc --noEmit
       - run: npm run build
@@ -87,6 +91,18 @@ jobs:
         run: |
           npm install --no-save playwright@1.56.1
           npx playwright install --with-deps chromium
+      - name: Validate static public site while API is offline and on mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --directory dist-public >/tmp/static-site.log 2>&1 &
+          static_pid=$!
+          trap 'kill "$static_pid" 2>/dev/null || true' EXIT
+          for i in {1..20}; do
+            if curl --silent --fail http://localhost:4173 >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/static-site-check.cjs
       - name: Validate owner photo deletion in isolated Postgres and browser
         shell: bash
         env:
