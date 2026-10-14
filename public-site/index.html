@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#fff9f5">
+  <meta name="referrer" content="no-referrer">
   <meta name="description" content="Chá de Panela de Larissa e Pedro — 21 de novembro de 2026, às 19h, em Viçosa/MG. Confirme presença e escolha um presente.">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Chá de Panela · Larissa e Pedro">
@@ -37,12 +38,13 @@
         <span class="flourish" aria-hidden="true">✺ ✧ ✺</span>
         <p class="invitation">Você é nosso convidado para o</p>
         <h1>Chá de Panela <em>Larissa &amp; Pedro</em></h1>
-        <p class="lead">Um encontro para celebrar o amor, a nossa nova casa e as pessoas que fazem parte da nossa história.</p>
+        <p class="lead" id="guest-message">Um encontro para celebrar o amor, a nossa nova casa e as pessoas que fazem parte da nossa história.</p>
         <div class="actions">
           <a class="pill" href="/rsvp.html" data-link>Confirmar presença <span aria-hidden="true">↗</span></a>
           <a class="pill outlined" href="/presentes.html" data-link>Escolher presente</a>
+          <button class="pill secondary" data-action="share">Compartilhar convite</button>
         </div>
-        <span class="hero-caption">Com muito carinho, esperamos você! ♡</span>
+        <div class="countdown" id="countdown-shower" role="status">21 de novembro de 2026 · 19h</div><span class="hero-caption">Com muito carinho, esperamos você! ♡</span>
       </div>
     </section>
     <section class="shell section" id="evento">
@@ -53,13 +55,45 @@
       </div>
     </section>
     <section class="softband"><div class="shell twocol">
-      <div><span class="eyebrow">Um carinho para nós</span><h2>Presentes para o nosso lar</h2><p>Escolha um item da nossa lista, sem cadastro. A disponibilidade é conferida novamente ao confirmar sua reserva.</p><a class="pill" href="/presentes.html" data-link>Ver a lista</a></div>
+      <div><span class="eyebrow">Um carinho para nós</span><h2>Presentes para o nosso lar</h2><p id="home-text">Escolha um item da nossa lista, sem cadastro. A disponibilidade é conferida novamente ao confirmar sua reserva.</p><a class="pill" href="/presentes.html" data-link>Ver a lista</a></div>
       <img src="/couple/larissa-pedro.jpg" loading="lazy" decoding="async" width="420" height="560" alt="Larissa e Pedro" class="couple-photo">
     </div></section>
+    <section class="shell section" id="nossa-historia">
+      <div class="section-heading"><span class="eyebrow">Larissa &amp; Pedro</span><h2>Nossa história</h2></div>
+      <p class="narrative" id="story-copy">Uma nova fase está chegando. Queremos compartilhar essa felicidade com as pessoas que fazem parte da nossa história.</p>
+    </section>
+    <section class="softband" id="recados-preview">
+      <div class="shell section">
+        <div class="section-heading"><span class="eyebrow">Um carinho para nós</span><h2>Recados dos convidados</h2></div>
+        <div id="recados-preview-list" class="preview-grid">
+          <article class="quote"><p>Os recados compartilhados aparecerão aqui assim que o mural estiver disponível.</p></article>
+        </div>
+        <div class="center" style="margin-top:30px"><a class="pill secondary" href="/recados.html" data-link>Deixar um recado</a></div>
+      </div>
+    </section>
     <section class="shell section center">
       <span class="eyebrow">Nossa celebração</span><h2>É ainda melhor com você.</h2>
       <p>Conte pra gente se poderá estar presente. Sua resposta nos ajuda a preparar esse dia especial.</p>
       <a class="pill" href="/rsvp.html" data-link>Confirmar presença</a>
+    </section>
+    <section class="section softband center" id="pix-section" hidden>
+      <div class="shell"><span class="eyebrow">Contribuição opcional</span><h2>Um carinho para a nossa casa</h2>
+        <p id="pix-recipient"></p><div class="notice pix-note" id="pix-key"></div>
+      </div>
+    </section>
+    <section class="shell section center">
+      <span class="eyebrow">E depois vem o grande dia 💍</span><h2>Larissa &amp; Pedro</h2>
+      <p>20 de março de 2027</p>
+      <div id="countdown-wedding" class="countdown" role="status"></div>
+    </section>
+    <section class="shell section faq-public">
+      <div class="section-heading"><span class="eyebrow">Dúvidas frequentes</span><h2>FAQ</h2></div>
+      <details><summary>Preciso comprar o presente exatamente no link?</summary><p>Não. O link é apenas uma sugestão; você pode comprar onde preferir.</p></details>
+      <details><summary>Como escolho um presente?</summary><p>Escolha um item disponível e clique em “Quero dar este presente”.</p></details>
+      <details><summary>Posso escolher mais de um?</summary><p>Sim!</p></details>
+      <details><summary>Preciso criar conta?</summary><p>Não. O RSVP e a lista de presentes funcionam sem cadastro.</p></details>
+      <details><summary>Como cancelo uma reserva?</summary><p>Guarde seu link pessoal, recebido ao reservar. Ele permite cancelar e liberar o presente novamente.</p></details>
+      <details><summary>Preciso levar o presente no dia?</summary><p>Esta orientação poderá ser atualizada pelos noivos nas informações do evento.</p></details>
     </section>
   </div>
 </main>

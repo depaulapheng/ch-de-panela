@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { hashToken } from "@/lib/utils";
 import { rateLimit, safeText } from "@/lib/security";
+import { changeReservationStatus } from "@/lib/reservation-status";
 
 async function find(token: string) {
   return prisma.giftReservation.findUnique({ where: { tokenHash: hashToken(token) }, include: { gift: { select: { id: true, name: true, purchaseUrl: true } }, installment: true } });
@@ -25,12 +26,14 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ t
   const { token } = await params;
   try {
     await prisma.$transaction(async tx => {
-      const r = await tx.giftReservation.findUnique({ where: { tokenHash: hashToken(token) }, include: { installment: true } });
-      if (!r || r.status !== "RESERVED") throw new Error("NOT_FOUND");
-      await tx.giftReservation.update({ where: { id: r.id }, data: { status: "CANCELLED", cancelledAt: new Date() } });
-      if (r.installment) await tx.giftInstallment.update({ where: { id: r.installment.id }, data: { status: "AVAILABLE", reservationId: null } });
-      else await tx.gift.update({ where: { id: r.giftId }, data: { reservedQuantity: { decrement: r.quantity } } });
-    }, { isolationLevel: "Serializable" });
+      await changeReservationStatus(tx, { tokenHash: hashToken(token) }, "CANCELLED");
+    }, { maxWait: 10_000, timeout: 15_000 });
     return NextResponse.json({ ok: true });
-  } catch { return NextResponse.json({ error: "Reserva não encontrada ou já cancelada." }, { status: 404 }); }
+  } catch (error) {
+    if (error instanceof Error && ["NOT_FOUND", "INACTIVE"].includes(error.message)) {
+      return NextResponse.json({ error: "Reserva não encontrada ou inativa." }, { status: 404 });
+    }
+    console.error("reservation_cancel_failed", error);
+    return NextResponse.json({ error: "Não foi possível cancelar agora. Tente novamente." }, { status: 503 });
+  }
 }

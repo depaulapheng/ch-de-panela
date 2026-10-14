@@ -12,7 +12,6 @@ createServer(async (req,res) => {
     const buf = await readFile(pathname);
     res.writeHead(200,{"Content-Type":types[extname(pathname)]||"application/octet-stream"});res.end(buf);
   } catch {
-    const buf = await readFile(resolve(out,"index.html"));
-    res.writeHead(200,{"Content-Type":"text/html; charset=utf-8"});res.end(buf);
+    res.writeHead(404,{"Content-Type":"text/plain; charset=utf-8"});res.end("Not found");
   }
 }).listen(Number(process.env.PORT||4173), "127.0.0.1", () => console.log("Static preview at http://localhost:"+String(process.env.PORT||4173)));

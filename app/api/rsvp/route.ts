@@ -13,7 +13,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Confira as informações preenchidas." }, { status: 400 });
   }
 
-  const { name, attending, companions, companionNames, message } = parsed.data;
+  const { attending, companions, companionNames, message } = parsed.data;
+  const name = safeText(parsed.data.name, 120).replace(/\s+/g, " ");
+  if (name.length < 2) return NextResponse.json({ error: "Informe seu nome completo." }, { status: 400 });
   const phone = normalizePhone(parsed.data.phone);
   const names = companionNames.split(/\r?\n/).map(s => safeText(s, 120)).filter(Boolean);
   if ((!attending && companions > 0) || companions !== names.length) {
@@ -45,7 +47,7 @@ export async function POST(req: NextRequest) {
           dietaryRestriction: null, message: safeText(message, 800) || null
         }
       });
-    });
+    }, { maxWait: 10_000, timeout: 15_000 });
     return NextResponse.json({ ok: true, attending }, { status: 201 });
   } catch (error) {
     if (error instanceof Error && error.message === "DUPLICATE") {

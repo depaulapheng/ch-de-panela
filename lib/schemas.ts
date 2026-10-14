@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const reservationSchema = z.object({
   giftId: z.string().min(1),
+  requestToken: z.string().regex(/^[A-Za-z0-9_-]{43}$/).optional(),
   name: z.string().trim().min(2).max(120),
   phone: z.string().trim().min(8).max(30),
   message: z.string().trim().max(600).optional().default(""),

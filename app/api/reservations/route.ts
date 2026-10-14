@@ -13,13 +13,27 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Confira os campos obrigatórios." }, { status: 400 });
   }
+  if (normalizePhone(parsed.data.phone).length < 8) {
+    return NextResponse.json({ error: "Informe um telefone válido com DDD." }, { status: 400 });
+  }
 
-  const token = newToken();
+  const token = parsed.data.requestToken || newToken();
   const tokenHash = hashToken(token);
   const { giftId } = parsed.data;
 
   try {
     const reservation = await prisma.$transaction(async (tx) => {
+      // Replays after a lost HTTP response recover the same reservation/token.
+      await tx.$queryRaw`SELECT 1 AS locked FROM pg_advisory_xact_lock(hashtext(${tokenHash}))`;
+      const previous = await tx.giftReservation.findUnique({
+        where: { tokenHash }, include: { gift: { select: { name: true, purchaseUrl: true } } }
+      });
+      if (previous) {
+        if (previous.giftId !== giftId || previous.status === "CANCELLED") throw new Error("UNAVAILABLE");
+        return previous;
+      }
+      // Serialize stock, quota selection and concurrent admin edits for this gift.
+      await tx.$queryRaw`SELECT id FROM "Gift" WHERE id = ${giftId} FOR UPDATE`;
       const gift = await tx.gift.findUnique({ where: { id: giftId } });
       if (!gift || !gift.active) throw new Error("UNAVAILABLE");
 
@@ -69,7 +83,7 @@ export async function POST(req: NextRequest) {
         },
         include: { gift: { select: { name: true, purchaseUrl: true } } }
       });
-    });
+    }, { maxWait: 10_000, timeout: 15_000 });
 
     return NextResponse.json(
       { ok: true, token, reservation: { id: reservation.id, gift: reservation.gift } },

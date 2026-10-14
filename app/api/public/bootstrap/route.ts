@@ -21,7 +21,7 @@ export async function GET() {
       prisma.gift.findMany({
         where: { active: true },
         select: {
-          id: true, name: true, description: true, imageUrl: true,
+          id: true, name: true, description: true, note: true, imageUrl: true,
           imageCredit: true, imageLicense: true, imageSourceUrl: true,
           approximateValue: true, desiredQuantity: true, reservedQuantity: true,
           priority: true, purchaseUrl: true, brand: true, model: true,
@@ -44,7 +44,8 @@ export async function GET() {
         take: 100
       })
     ]);
-    return NextResponse.json(serialize({ event, gifts, categories, messages }), {
+    const publicEvent = event ? { ...event, pixKey: event.pixEnabled ? event.pixKey : null, pixRecipient: event.pixEnabled ? event.pixRecipient : null } : null;
+    return NextResponse.json(serialize({ event: publicEvent, gifts, categories, messages }), {
       headers: { "Cache-Control": "no-store" }
     });
   } catch (error) {
