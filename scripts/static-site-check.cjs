@@ -12,7 +12,7 @@ const assert = require("node:assert/strict");
       body: JSON.stringify({ error: "Servidor indisponível para este teste" })
     }));
     await page.goto(url + "/", { waitUntil: "domcontentloaded" });
-    assert.match(await page.locator("h1").innerText(), /Larissa.*Pedro/s);
+    assert.match(await page.locator(".hero-names").innerText(), /Larissa.*Pedro/s);
     assert.match(await page.locator("#event-venue").innerText(), /Reserva Real/);
     // CDN and original Next frontend must share the exact hero artwork, typography and class names.
     await page.locator(".botanical-photo").evaluate(img => img.decode());
