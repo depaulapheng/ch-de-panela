@@ -64,7 +64,7 @@ const assert = require("node:assert/strict");
     await page.goto(url + "/presentes.html", { waitUntil: "domcontentloaded" });
     await page.getByRole("button", { name: "Quero dar este presente" }).waitFor({ timeout: 12000 });
     assert.match(await page.locator(".gift-body").innerText(), /Cores preferidas: Branco/);
-    assert.match(await page.locator(".gift-body").innerText(), /Fotógrafo.*CC BY/);
+    assert.match(await page.locator(".gift-card").innerText(), /Fotógrafo.*CC BY/);
     await page.getByRole("button", { name: "Quero dar este presente" }).click();
     await page.locator("#guest-name").fill("Pessoa Teste");
     await page.locator("#guest-phone").fill("31999999999");
