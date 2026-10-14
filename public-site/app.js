@@ -183,9 +183,9 @@ function gifts() {
   else {
     const filtered = data.gifts.filter(g => sector === "all" || g.category?.slug === sector)
       .sort((a,b) => ["HIGH","NORMAL","OPTIONAL"].indexOf(a.priority)-["HIGH","NORMAL","OPTIONAL"].indexOf(b.priority));
-    inner = '<div class="filters"><label for="sector">Filtrar por setor</label><select id="sector" aria-label="Filtrar por setor"><option value="all">Todos os setores</option>'+
+    inner = '<div class="sector-filter"><label for="sector">Setor</label><select class="select" id="sector" aria-label="Filtrar por setor"><option value="all">Todos os setores</option>'+
       data.categories.map(c => '<option value="'+esc(c.slug)+'" '+(sector===c.slug?"selected":"")+'>'+esc(c.name)+'</option>').join("")+'</select></div>'+
-      (filtered.length ? '<div class="grid">'+filtered.map(giftHTML).join("")+'</div>' : notice("Não há presentes neste setor."));
+      (filtered.length ? '<div class="grid grid-3">'+filtered.map(giftHTML).join("")+'</div>' : notice("Não há presentes neste setor."));
   }
   pageShell("Lista de presentes","Para o nosso lar","Escolha com carinho. Nenhum cadastro é necessário e a disponibilidade é verificada ao reservar.",inner);
   main.querySelector("#sector")?.addEventListener("change",e=>{sector=e.target.value;gifts();});
