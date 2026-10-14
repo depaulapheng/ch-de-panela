@@ -44,7 +44,8 @@ export async function GET() {
         take: 100
       })
     ]);
-    return NextResponse.json(serialize({ event, gifts, categories, messages }), {
+    const publicEvent = event ? { ...event, pixKey: event.pixEnabled ? event.pixKey : null, pixRecipient: event.pixEnabled ? event.pixRecipient : null } : null;
+    return NextResponse.json(serialize({ event: publicEvent, gifts, categories, messages }), {
       headers: { "Cache-Control": "no-store" }
     });
   } catch (error) {

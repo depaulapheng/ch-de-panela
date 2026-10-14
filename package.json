@@ -5,8 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && vitest run && next build",
-    "start": "next start -p ${PORT:-3000}",
-    "start:prod": "prisma migrate deploy && prisma db seed && next start -p ${PORT:-3000}",
+    "start": "node scripts/start-server.mjs",
+    "start:prod": "node scripts/start-server.mjs",
+    "db:prepare": "prisma migrate deploy && prisma db seed",
     "lint": "next lint",
     "test": "vitest run",
     "seed": "prisma db seed",

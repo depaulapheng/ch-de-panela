@@ -1,0 +1,24 @@
+# Separate Blueprint for the existing static service only. Do not sync the historical
+# render.yaml against production: it declares a database and a different region.
+services:
+  - type: web
+    runtime: static
+    name: cha-panela-larissa-pedro-publico
+    repo: https://github.com/depaulapheng/ch-de-panela
+    branch: main
+    autoDeployTrigger: commit
+    buildCommand: node scripts/build-public.mjs
+    staticPublishPath: dist-public
+    envVars:
+      - key: PUBLIC_API_BASE
+        value: https://cha-panela-pedro-larissa.onrender.com
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: no-referrer
+      - path: /*
+        name: X-Frame-Options
+        value: DENY

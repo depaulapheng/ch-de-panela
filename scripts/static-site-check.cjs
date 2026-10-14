@@ -1,7 +1,7 @@
 const { chromium } = require("playwright");
 const assert = require("node:assert/strict");
 (async () => {
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ headless: true, channel: process.env.PLAYWRIGHT_CHANNEL || undefined });
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
   const page = await context.newPage();
   const url = "http://localhost:4173";
@@ -54,8 +54,23 @@ const assert = require("node:assert/strict");
     await page.getByText("Presente reservado!").waitFor({ timeout: 12000 });
     const urlText = await page.locator("#personal-link").inputValue();
     assert.ok(urlText.startsWith(url + "/minha-reserva.html?token="));
+    // A delayed policy response must reveal companion fields without losing input.
+    let releaseBootstrap;
+    const delayed = new Promise(resolve => { releaseBootstrap = resolve; });
+    await page.route("http://localhost:3000/api/public/bootstrap", async route => {
+      await delayed;
+      await route.fulfill({ status: 200, headers: { "Content-Type":"application/json", "Access-Control-Allow-Origin":url },
+        body: JSON.stringify({ event:{ rsvpAllowCompanions:true }, gifts:[], categories:[], messages:[] }) });
+    });
     await page.goto(url + "/rsvp.html", { waitUntil: "domcontentloaded" });
+    await page.locator("#rsvp-name").fill("Nome preservado");
+    await page.locator("#rsvp-phone").fill("31987654321");
+    await page.locator("#rsvp-message").fill("Mensagem preservada");
+    releaseBootstrap();
     await page.locator("#companions").waitFor({ timeout: 12000 });
+    assert.equal(await page.locator("#rsvp-name").inputValue(),"Nome preservado");
+    assert.equal(await page.locator("#rsvp-phone").inputValue(),"31987654321");
+    assert.equal(await page.locator("#rsvp-message").inputValue(),"Mensagem preservada");
     assert.ok((await page.evaluate(() => document.documentElement.scrollWidth)) <= 392, "RSVP overflows mobile screen");
     console.log("Public static site: backend-offline landing, deep routes, mobile and mock reservation PASS");
   } finally { await browser.close(); }

@@ -18,7 +18,7 @@ export async function getAdmin() {
   const token = (await cookies()).get(COOKIE)?.value;
   if (!token) return null;
   try {
-    const { payload } = await jwtVerify(token, secret());
+    const { payload } = await jwtVerify(token, secret(), { algorithms: ["HS256"] });
     if (!payload.sub) return null;
     return prisma.admin.findUnique({ where: { id: payload.sub }, select: { id: true, email: true, name: true } });
   } catch { return null; }

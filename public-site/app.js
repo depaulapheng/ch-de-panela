@@ -46,7 +46,7 @@ function fetchJSON(path, options = {}, onWait, timeout = 65000) {
     .finally(() => { clearTimeout(deadline); clearTimeout(slow); });
 }
 async function boot(force = false) {
-  if (loading && !force) return loading;
+  if (loading) return loading;
   loading = Promise.all([
     fetchJSON("/api/public/bootstrap"),
     fetch("/photo-map.json").then(r => r.ok ? r.json() : {}).catch(() => ({}))
@@ -54,11 +54,15 @@ async function boot(force = false) {
     data = payload;
     photoMap = map;
     refreshing = false;
-    if (!(location.pathname === "/rsvp.html" && document.querySelector("#rsvp-name")?.value)) render();
+    // Refresh data without destroying forms or restarting album/token requests.
+    if (location.pathname === "/") updateHome();
+    else if (location.pathname === "/presentes.html") gifts();
+    else if (location.pathname === "/rsvp.html") updateRsvpPolicy();
+    else if (location.pathname === "/recados.html" && !main.querySelector("#message-name")?.value && !main.querySelector("#message-text")?.value) recados();
     return data;
   }).catch(() => {
     refreshing = false;
-    if (!data) render();
+    if (!data && location.pathname === "/presentes.html") gifts();
     return null;
   }).finally(() => { loading = null; });
   return loading;
@@ -79,6 +83,47 @@ function updateHome() {
   if (venue && event.venue) venue.textContent = event.venue;
   if (address && event.address) address.textContent = event.address;
   if (map && safeHref(event.mapsUrl)) { map.href = event.mapsUrl; map.hidden = false; }
+  for (const [id, value] of [
+    ["guest-message", event.guestMessage],
+    ["home-text", event.homeText],
+    ["story-copy", event.storyText],
+    ["pix-recipient", event.pixRecipient]
+  ]) {
+    const el = main.querySelector("#" + id);
+    if (el && value) el.textContent = value;
+  }
+  const preview = main.querySelector("#recados-preview-list");
+  if (preview && Array.isArray(data.messages)) {
+    preview.innerHTML = data.messages.length
+      ? data.messages.slice(0, 3).map(m => '<article class="quote"><p>“' + esc(m.message) +
+        '”</p><small>— ' + esc(m.name) + '</small></article>').join("")
+      : '<article class="quote"><p>Ainda não há recados. Você pode ser a primeira pessoa a deixar um carinho.</p></article>';
+  }
+  const pix = main.querySelector("#pix-section");
+  if (pix && event.pixEnabled && (event.pixKey || event.pixRecipient)) {
+    pix.hidden = false;
+    const key = pix.querySelector("#pix-key");
+    if (key) { key.textContent = event.pixKey ? "Chave PIX: " + event.pixKey : ""; key.hidden = !event.pixKey; }
+  }
+  updateCountdowns();
+}
+function updateCountdowns() {
+  const settings = data?.event || {};
+  for (const [id, rawDate] of [
+    ["countdown-shower", settings.showerDate || "2026-11-21T22:00:00Z"],
+    ["countdown-wedding", settings.weddingDate || "2027-03-20T18:00:00Z"]
+  ]) {
+    const el = main.querySelector("#" + id);
+    if (!el) continue;
+    const timestamp = new Date(rawDate).getTime();
+    if (!Number.isFinite(timestamp)) continue;
+    const remainingSeconds = Math.max(0, Math.floor((timestamp - Date.now()) / 1000));
+    if (remainingSeconds === 0) { el.textContent = "Chegou o grande dia! 💛"; continue; }
+    const days = Math.floor(remainingSeconds / 86400);
+    const hours = Math.floor((remainingSeconds % 86400) / 3600);
+    const minutes = Math.floor((remainingSeconds % 3600) / 60);
+    el.textContent = days + " dias · " + hours + " horas · " + minutes + " minutos";
+  }
 }
 function remaining(g) {
   return g.acceptsInstallments
@@ -128,11 +173,12 @@ function chooseGift(id) {
   const g = data.gifts.find(g => g.id === id);
   if (!g || remaining(g)<=0) { alert("Este presente não está mais disponível."); return; }
   currentGift = g;
+  const requestToken = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
   const overlay = document.createElement("div");
   overlay.className = "overlay";
   overlay.id = "gift-modal";
   overlay.setAttribute("role","presentation");
-  overlay.innerHTML = '<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="gift-title"><button class="close" aria-label="Fechar" id="close-gift">×</button><span class="eyebrow">Reserva de presente</span><h2 id="gift-title">'+esc(g.name)+'</h2><p>Confirmaremos a disponibilidade diretamente no banco de dados.</p>'+
+  overlay.innerHTML = '<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="gift-title"><button class="close" aria-label="Fechar" id="close-gift">×</button><span class="eyebrow">Reserva de presente</span><h2 id="gift-title">'+esc(g.name)+'</h2><p>Vamos conferir se este presente continua disponível.</p>'+
     '<form class="form" id="gift-form"><div class="field"><label for="guest-name">Seu nome *</label><input required minlength="2" maxlength="120" autocomplete="name" name="name" id="guest-name"></div>'+
     '<div class="field"><label for="guest-phone">WhatsApp ou telefone *</label><input required minlength="8" maxlength="30" inputmode="tel" autocomplete="tel" name="phone" id="guest-phone"></div>'+
     '<div class="field"><label for="guest-message">Mensagem (opcional)</label><textarea maxlength="600" name="message" id="guest-message"></textarea></div>'+
@@ -150,7 +196,7 @@ function chooseGift(id) {
   overlay.querySelector("#gift-form").addEventListener("submit",async e=>{
     e.preventDefault();
     const f=e.currentTarget, submit=overlay.querySelector("#gift-submit"), status=overlay.querySelector("#gift-status");
-    const payload={giftId:g.id,name:f.elements.name.value,phone:f.elements.phone.value,message:f.elements.message.value,confirm:f.elements.confirm.checked};
+    const payload={giftId:g.id,requestToken,name:f.elements.name.value,phone:f.elements.phone.value,message:f.elements.message.value,confirm:f.elements.confirm.checked};
     submit.disabled=true; status.innerHTML=notice("Enviando reserva. Não feche a página até aparecer a confirmação.");
     try {
       const result=await fetchJSON("/api/reservations",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}, msg=>{status.innerHTML=notice(msg);});
@@ -176,19 +222,20 @@ function chooseGift(id) {
   });
 }
 function rsvp() {
-  const allow = Boolean(data?.event?.rsvpAllowCompanions);
   pageShell("Confirme sua presença","Chá de Panela · 21.11.2026","Sua resposta ajuda a preparar tudo com carinho.",
     '<div class="panel" style="max-width:680px"><form id="rsvp-form" class="form">'+
     '<div class="field"><label for="rsvp-name">Seu nome *</label><input id="rsvp-name" name="name" required minlength="2" maxlength="120" autocomplete="name"></div>'+
     '<div class="field"><label for="rsvp-phone">WhatsApp / telefone</label><input id="rsvp-phone" name="phone" inputmode="tel" autocomplete="tel" maxlength="30"></div>'+
     '<div class="field"><label for="attending">Você poderá comparecer?</label><select id="attending" name="attending"><option value="yes">Sim, estarei lá 💛</option><option value="no">Infelizmente não poderei</option></select></div>'+
-    (allow ? '<div class="field"><label for="companions">Quantidade de acompanhantes</label><input id="companions" type="number" name="companions" min="0" max="10" value="0"></div>'+
-    '<div class="field"><label for="companion-names">Nome de cada acompanhante (um por linha)</label><textarea id="companion-names" name="companionNames" maxlength="800"></textarea></div>' : "")+
+    '<div id="companion-fields" hidden><div class="field"><label for="companions">Quantidade de acompanhantes</label><input id="companions" type="number" name="companions" min="0" max="10" value="0"></div>'+
+    '<div class="field"><label for="companion-names">Nome de cada acompanhante (um por linha)</label><textarea id="companion-names" name="companionNames" maxlength="800"></textarea></div></div>'+
     '<div class="field"><label for="rsvp-message">Mensagem para nós</label><textarea id="rsvp-message" name="message" maxlength="800"></textarea></div>'+
     '<div id="rsvp-status" aria-live="polite"></div><button class="pill" id="rsvp-submit">Enviar confirmação</button></form></div>');
   const form = main.querySelector("#rsvp-form");
+  updateRsvpPolicy();
   form.addEventListener("submit",async e=>{
     e.preventDefault(); const f=e.currentTarget, button=f.querySelector("button"), status=f.querySelector("#rsvp-status");
+    const allow=Boolean(data?.event?.rsvpAllowCompanions);
     const attending=f.elements.attending.value==="yes", companions=allow&&attending ? Number(f.elements.companions.value || 0) : 0;
     const names=allow&&attending ? f.elements.companionNames.value.trim() : "";
     if (companions!== (names?names.split(/\r?\n/).filter(Boolean).length:0)) {
@@ -200,6 +247,10 @@ function rsvp() {
       status.innerHTML=notice(attending?"Presença confirmada! 🎉":"Obrigado por nos avisar. Sentiremos sua falta 💛","success");f.reset();
     }catch(err){status.innerHTML=notice(err.message,"error");}finally{button.disabled=false;}
   });
+}
+function updateRsvpPolicy() {
+  const fields=main.querySelector("#companion-fields");
+  if(fields)fields.hidden=!data?.event?.rsvpAllowCompanions;
 }
 function recados() {
   const quotes = data ? (data.messages.length ? data.messages.map(m=>
@@ -291,7 +342,7 @@ function render() {
   const path=decodeURI(location.pathname);
   main.className="";
   document.title="Chá de Panela | Larissa e Pedro";
-  if (path==="/") {main.innerHTML=home;updateHome();}
+  if (path==="/") {main.innerHTML=home;updateHome();updateCountdowns();}
   else if(path==="/presentes.html")gifts();
   else if(path==="/rsvp.html")rsvp();
   else if(path==="/recados.html")recados();
@@ -305,6 +356,7 @@ document.addEventListener("click",e=>{
   const btn=e.target.closest("[data-action]");
   if (btn) {
     if(btn.dataset.action==="retry")onRetry();
+    if(btn.dataset.action==="share") { const url=location.origin+"/"; if (navigator.share) navigator.share({ title:"Chá de Panela Larissa e Pedro",url }).catch(()=>{}); else navigator.clipboard?.writeText(url).then(()=>alert("Link do convite copiado!")).catch(()=>alert(url)); }
     if(btn.dataset.action==="refresh-photos")loadPhotos();
     return;
   }
@@ -313,7 +365,8 @@ document.addEventListener("click",e=>{
   e.preventDefault();history.pushState(null,"",url.pathname+url.search+url.hash);
   render();if(url.hash)setTimeout(()=>document.querySelector(url.hash)?.scrollIntoView(),0);
 });
-window.addEventListener("popstate",()=>{main.querySelector("#gift-modal")?.remove();currentGift=null;render();});
+window.addEventListener("popstate",()=>{document.querySelector("#gift-modal")?.remove();document.body.style.overflow="";currentGift=null;render();});
 render();
 loading = boot(); // non-blocking; static invitation was already painted by HTML/CSS
+setInterval(updateCountdowns, 60000);
 })();

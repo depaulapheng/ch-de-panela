@@ -90,14 +90,16 @@ Os testes unitários rodam sem banco. O teste de concorrência é ativado quando
 
 O repositório inclui `render.yaml`. A arquitetura de produção é:
 
-`GitHub -> Render Web Service -> Render PostgreSQL`
+`GitHub -> Render Static Site (convidados) -> API Next.js no Web Service -> PostgreSQL existente`
+
+Site dos convidados: https://cha-panela-larissa-pedro-publico.onrender.com. Área dos noivos: https://cha-panela-pedro-larissa.onrender.com/admin/login. Configuração efetiva e limitações: [PUBLIC_SITE_DEPLOY.md](PUBLIC_SITE_DEPLOY.md).
 
 Comandos do serviço:
 - Build: `npm install --no-audit --no-fund && npm run build`
 - Start: `npm run start:prod`
 - Health check: `/api/health`
 
-`start:prod` executa `prisma migrate deploy`, o seed idempotente e inicia o Next.js.
+`start:prod` inicia somente o Next.js, sem escrever no banco durante a retomada. Migrations futuras exigem backup e execução explícita antes do deploy; a rotina anterior permanece em `npm run db:prepare` para manutenção revisada.
 
 Nunca grave uploads no filesystem do Render; no MVP as imagens são URLs. Para upload real, usar S3, Cloudinary ou serviço equivalente.
 
@@ -107,7 +109,7 @@ Nunca grave uploads no filesystem do Render; no MVP as imagens são URLs. Para u
 2. Executar testes.
 3. Fazer commit/push para `main`.
 4. O Render faz auto-deploy.
-5. Se houver migration nova, `prisma migrate deploy` roda antes do servidor iniciar.
+5. Se houver migration nova, revisar e executar `prisma migrate deploy` uma vez no banco correto antes de publicar a versão correspondente; não executar seed como rotina de retomada.
 6. Verificar `/api/health` e logs.
 
 ## Backup PostgreSQL
