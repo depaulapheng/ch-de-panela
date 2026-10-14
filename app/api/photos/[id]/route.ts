@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimit, sameOrigin } from "@/lib/security";
+import { isPublicSiteOrigin } from "@/lib/public-origin";
 import { validPhotoDeleteToken } from "@/lib/photo-upload";
 import { prisma } from "@/lib/db";
 
@@ -28,7 +29,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 
 /** A short-lived, upload-specific token prevents unauthorized deletion. */
 export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
-  if (!sameOrigin(req)) return NextResponse.json({ error: "Origem inválida." }, { status: 403 });
+  if (!sameOrigin(req) && !isPublicSiteOrigin(req.headers.get("origin"))) return NextResponse.json({ error: "Origem inválida." }, { status: 403 });
   if (!rateLimit(req, "guest-photo-delete", 10, 10 * 60_000))
     return NextResponse.json({ error: "Muitas tentativas." }, { status: 429 });
   const { id } = await context.params;
