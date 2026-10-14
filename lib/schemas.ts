@@ -12,6 +12,8 @@ export const rsvpSchema = z.object({
   name: z.string().trim().min(2).max(120),
   phone: z.string().trim().max(30).optional().default(""),
   attending: z.boolean(),
+  companions: z.coerce.number().int().min(0).max(10).optional().default(0),
+  companionNames: z.string().trim().max(800).optional().default(""),
   message: z.string().trim().max(800).optional().default("")
 });
 
