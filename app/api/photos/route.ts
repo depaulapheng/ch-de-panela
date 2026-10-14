@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { cloudinaryDownloadUrl, cloudinaryPhotoUrl, listAlbumPhotos, type AlbumPhoto } from "@/lib/cloudinary";
 import { rateLimit, sameOrigin } from "@/lib/security";
+import { isPublicSiteOrigin } from "@/lib/public-origin";
 import {
   GUEST_IMAGE_TYPES, MAX_GUEST_BATCH_BYTES, MAX_GUEST_PHOTO_BYTES,
   MAX_GUEST_PHOTOS, photoDeleteToken, safeGuestPhotoName, validGuestImageSignature
@@ -62,7 +63,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  if (!sameOrigin(req)) return NextResponse.json({ error: "Origem inválida." }, { status: 403 });
+  if (!sameOrigin(req) && !isPublicSiteOrigin(req.headers.get("origin"))) return NextResponse.json({ error: "Origem inválida." }, { status: 403 });
   if (!rateLimit(req, "guest-photos", 6, 10 * 60_000)) {
     return NextResponse.json({ error: "Muitos envios. Aguarde alguns minutos e tente novamente." }, { status: 429 });
   }
