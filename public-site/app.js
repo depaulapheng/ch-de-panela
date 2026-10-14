@@ -120,12 +120,11 @@ function updateCountdowns() {
     if (!el) continue;
     const timestamp = new Date(rawDate).getTime();
     if (!Number.isFinite(timestamp)) continue;
-    const remainingSeconds = Math.max(0, Math.floor((timestamp - Date.now()) / 1000));
-    if (remainingSeconds === 0) { el.textContent = "Chegou o grande dia! 💛"; continue; }
-    const days = Math.floor(remainingSeconds / 86400);
-    const hours = Math.floor((remainingSeconds % 86400) / 3600);
-    const minutes = Math.floor((remainingSeconds % 3600) / 60);
-    el.textContent = days + " dias · " + hours + " horas · " + minutes + " minutos";
+    const seconds = Math.max(0, Math.floor((timestamp - Date.now()) / 1000));
+    const values = [Math.floor(seconds / 86400), Math.floor((seconds % 86400) / 3600), Math.floor((seconds % 3600) / 60), seconds % 60];
+    const boxes = el.querySelectorAll(".count-num");
+    if (boxes.length === 4) boxes.forEach((box, i) => {box.textContent = String(values[i]).padStart(2,"0");});
+    else el.textContent = values[0] + " dias · " + values[1] + " horas · " + values[2] + " minutos";
   }
 }
 function remaining(g) {
@@ -384,5 +383,5 @@ document.addEventListener("click",e=>{
 window.addEventListener("popstate",()=>{document.querySelector("#gift-modal")?.remove();document.body.style.overflow="";currentGift=null;render();});
 render();
 // render() starts only the data request needed by the current guest route.
-setInterval(updateCountdowns, 60000);
+setInterval(updateCountdowns, 1000);
 })();
