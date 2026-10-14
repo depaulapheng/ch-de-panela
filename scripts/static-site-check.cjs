@@ -7,8 +7,8 @@ const assert = require("node:assert/strict");
   const url = "http://localhost:4173";
   try {
     await page.route("http://localhost:3000/api/**", route => route.fulfill({
-      status: 503,
-      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": url },
+      status: route.request().method() === "OPTIONS" ? 204 : 503,
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": url, "Access-Control-Allow-Methods": "GET,POST,OPTIONS", "Access-Control-Allow-Headers": "Content-Type" },
       body: JSON.stringify({ error: "Servidor indisponível para este teste" })
     }));
     await page.goto(url + "/", { waitUntil: "domcontentloaded" });
@@ -16,10 +16,10 @@ const assert = require("node:assert/strict");
     assert.match(await page.locator("#event-venue").innerText(), /Reserva Real/);
     const initial = await page.evaluate(() => ({ width: document.documentElement.scrollWidth, screen: innerWidth }));
     assert.ok(initial.width <= initial.screen + 2, "Home overflows mobile screen");
-    await page.goto(url + "/presentes", { waitUntil: "domcontentloaded" });
-    await page.getByText("Servidor indisponível para este teste").waitFor({ timeout: 12000 });
+    await page.goto(url + "/presentes.html", { waitUntil: "domcontentloaded" });
+    await page.getByText("Não foi possível consultar os dados agora.").waitFor({ timeout: 12000 });
     assert.match(await page.locator("h1").innerText(), /Lista de presentes/);
-    await page.goto(url + "/rsvp", { waitUntil: "domcontentloaded" });
+    await page.goto(url + "/rsvp.html", { waitUntil: "domcontentloaded" });
     await page.locator("#rsvp-name").fill("Pessoa Teste");
     await page.getByRole("button", { name: "Enviar confirmação" }).click();
     await page.getByText("Servidor indisponível para este teste").waitFor({ timeout: 12000 });
@@ -28,7 +28,7 @@ const assert = require("node:assert/strict");
     await page.unroute("http://localhost:3000/api/**");
     await page.route("http://localhost:3000/api/public/bootstrap", route => route.fulfill({
       status: 200,
-      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": url },
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": url, "Access-Control-Allow-Methods": "GET,POST,OPTIONS", "Access-Control-Allow-Headers": "Content-Type" },
       body: JSON.stringify({
         event: { showerTime: "19h", venue: "Reserva Real", address: "Viçosa", rsvpAllowCompanions: true },
         categories: [{ name: "Cozinha", slug: "cozinha" }],
@@ -41,7 +41,7 @@ const assert = require("node:assert/strict");
       })
     }));
     await page.route("http://localhost:3000/api/reservations", route => route.fulfill({
-      status: 201, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": url },
+      status: route.request().method() === "OPTIONS" ? 204 : 201, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": url },
       body: JSON.stringify({ ok: true, token: "test-token-not-persisted" })
     }));
     await page.goto(url + "/presentes", { waitUntil: "domcontentloaded" });
