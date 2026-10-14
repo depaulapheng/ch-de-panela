@@ -75,6 +75,20 @@ function onRetry() {
   const quotes=main.querySelector("#quotes");if(quotes)quotes.innerHTML=waitCard();
   boot(true);
 }
+function originalGiftCard(g) {
+  const left=remaining(g), img=imageFor(g), value=money(g.approximateValue);
+  const src=safeHref(g.imageSourceUrl||g.imageUrl);
+  return '<article class="card gift-card"><div class="gift-img">'+
+    (img?'<img src="'+esc(img)+'" alt="'+esc(g.name)+'" loading="lazy">':'<div class="gift-photo-placeholder">'+esc(g.name)+'</div>')+
+    (src&&(g.imageCredit||g.imageLicense)?'<div class="image-credit"><a href="'+src+'" target="_blank" rel="noopener noreferrer">Foto: '+esc(g.imageCredit||"Fonte")+(g.imageLicense?' · '+esc(g.imageLicense):"")+'</a></div>':"")+
+    '</div><div class="gift-body"><span class="badge">'+esc(g.category?.name||"Presente")+'</span>'+
+    '<div class="gift-name">'+esc(g.name)+'</div>'+
+    (g.description?'<div class="muted">'+esc(g.description)+'</div>':"")+
+    (value?'<div><strong>'+value+'</strong> <span class="muted" style="font-size:12px">aprox.</span></div>':"")+
+    (g.colors?.length?'<div><div class="muted" style="font-size:12px">Cores preferidas</div><div class="color-row">'+g.colors.map(x=>'<span class="dot" title="'+esc(x.color.name)+'" style="background:'+esc(x.color.hex||"#eee")+'"></span>').join("")+'</div></div>':"")+
+    '<div class="'+(left>0?"status-ok":"status-out")+'">'+(left>0?"Disponível":"Já escolhido 💛")+'</div>'+
+    '<div style="margin-top:auto">'+(left>0?'<a class="btn btn-primary" style="width:100%" href="/presentes.html?reservar='+encodeURIComponent(g.id)+'" data-link>Quero dar este presente</a>':'<button class="btn" style="width:100%" disabled>Indisponível</button>')+'</div></div></article>';
+}
 function updateHome() {
   if (!data || !data.event) return;
   const event = data.event;
@@ -98,10 +112,11 @@ function updateHome() {
   const preview = main.querySelector("#recados-preview-list");
   if (preview && Array.isArray(data.messages)) {
     preview.innerHTML = data.messages.length
-      ? data.messages.slice(0, 3).map(m => '<article class="quote"><p>“' + esc(m.message) +
-        '”</p><small>— ' + esc(m.name) + '</small></article>').join("")
-      : '<article class="quote"><p>Ainda não há recados. Você pode ser a primeira pessoa a deixar um carinho.</p></article>';
+      ? data.messages.slice(0, 6).map(m => '<blockquote class="guest-quote">“'+esc(m.message)+'”<div class="muted">— '+esc(m.name)+'</div></blockquote>').join("")
+      : '<p class="muted">Ainda não há recados. Você pode ser a primeira pessoa a deixar um carinho.</p>';
   }
+  const giftsPreview=main.querySelector("#home-gifts-list");
+  if(giftsPreview && Array.isArray(data.gifts)) giftsPreview.innerHTML=data.gifts.slice(0,6).map(originalGiftCard).join("") || '<div class="card empty">Nenhum presente disponível.</div>';
   const pix = main.querySelector("#pix-section");
   if (pix && event.pixEnabled && (event.pixKey || event.pixRecipient)) {
     pix.hidden = false;
