@@ -53,7 +53,7 @@ const assert = require("node:assert/strict");
     await page.getByRole("button", { name: "Confirmar reserva" }).click();
     await page.getByText("Presente reservado!").waitFor({ timeout: 12000 });
     const urlText = await page.locator("#personal-link").inputValue();
-    assert.ok(urlText.startsWith(url + "/minha-reserva/"));
+    assert.ok(urlText.startsWith(url + "/minha-reserva.html?token="));
     await page.goto(url + "/rsvp", { waitUntil: "domcontentloaded" });
     await page.locator("#companions").waitFor({ timeout: 12000 });
     assert.ok((await page.evaluate(() => document.documentElement.scrollWidth)) <= 392, "RSVP overflows mobile screen");
