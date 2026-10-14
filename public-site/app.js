@@ -162,20 +162,20 @@ function imageFor(g) {
   return safeHref(original) ? original : "";
 }
 function giftHTML(g) {
-  const rem = remaining(g), img = imageFor(g), cost = money(g.approximateValue);
-  const credit=safeHref(g.imageSourceUrl||g.imageUrl);
-  const status = rem <= 0 ? "Já escolhido 💛" : g.acceptsInstallments ? rem + " cotas disponíveis" :
-    Number(g.desiredQuantity) > 1 ? rem + " unidades disponíveis" : "Disponível";
-  return '<article class="gift"><div class="gift-visual">'+
-    (img ? '<img src="'+esc(img)+'" loading="lazy" decoding="async" alt="'+esc(g.name)+'">' : '<span class="empty-art">'+esc(g.name)+'</span>') +
-    '</div><div class="gift-body">'+(credit&&(g.imageCredit||g.imageLicense)?'<small><a class="quiet-link" href="'+credit+'" target="_blank" rel="noopener noreferrer">Foto: '+esc(g.imageCredit||"Fonte")+(g.imageLicense?' · '+esc(g.imageLicense):'')+'</a></small>':'')+'<span class="tag">'+esc(g.category?.name||"Presente")+'</span><h3>'+esc(g.name)+'</h3>'+
-    (g.description ? '<p>'+esc(g.description)+'</p>' : "") +
-    (cost ? '<strong>'+cost+' <small>aprox.</small></strong>' : "") +
-    (g.brand ? '<p>Sugestão: '+esc(g.brand)+(g.model ? " · "+esc(g.model) : "")+'</p>' : "") +
-    (g.colors?.length ? '<p>Cores preferidas: '+g.colors.map(c=>esc(c.color.name)).join(", ")+'</p>' : "") +
-    (g.note ? '<p>'+esc(g.note)+'</p>' : "") +
-    '<p class="availability '+(rem<=0?"out":"")+'">'+esc(status)+'</p>'+
-    '<button class="pill" data-gift="'+esc(g.id)+'" '+(rem <= 0 ? "disabled" : "")+'>'+ (rem <= 0 ? "Indisponível" : "Quero dar este presente") +'</button></div></article>';
+  const rem=remaining(g),img=imageFor(g),cost=money(g.approximateValue),credit=safeHref(g.imageSourceUrl||g.imageUrl);
+  const status=rem<=0?"Já escolhido 💛":g.acceptsInstallments?rem+" cotas disponíveis":g.desiredQuantity>1?g.reservedQuantity+" de "+g.desiredQuantity+" escolhidos · faltam "+rem:"Disponível";
+  return '<article class="card gift-card"><div class="gift-img">'+
+    (img?'<img src="'+esc(img)+'" loading="lazy" decoding="async" alt="'+esc(g.name)+'">':'<div class="gift-photo-placeholder">'+esc(g.name)+'</div>')+
+    (credit&&(g.imageCredit||g.imageLicense)?'<div class="image-credit"><a href="'+credit+'" target="_blank" rel="noopener noreferrer">Foto: '+esc(g.imageCredit||"Fonte")+(g.imageLicense?' · '+esc(g.imageLicense):"")+'</a></div>':"")+
+    '</div><div class="gift-body"><span class="badge">'+esc(g.category?.name||"Presente")+'</span>'+
+    '<div class="gift-name">'+esc(g.name)+'</div>'+
+    (g.description?'<p class="muted" style="margin:0">'+esc(g.description)+'</p>':"")+
+    (cost?'<div><strong>'+cost+'</strong> <span class="muted" style="font-size:12px">aprox.</span></div>':"")+
+    (g.acceptsInstallments?'<div class="notice"><strong>'+rem+'</strong> de '+esc(g.installmentCount)+' cotas disponíveis</div>':"")+
+    (g.colors?.length?'<div><div class="muted" style="font-size:12px">Cores preferidas: '+g.colors.map(x=>esc(x.color.name)).join(", ")+'</div><div class="color-row">'+g.colors.map(x=>'<span class="dot" title="'+esc(x.color.name)+'" style="background:'+esc(x.color.hex||"#eee")+'"></span>').join("")+'</div></div>':"")+
+    '<div class="'+(rem>0?"status-ok":"status-out")+'">'+esc(status)+'</div>'+
+    (g.brand?'<div class="muted" style="font-size:13px">Sugestão: '+esc(g.brand)+(g.model?' · '+esc(g.model):"")+'</div>':"")+
+    '<div style="margin-top:auto"><button class="btn btn-primary" style="width:100%" data-gift="'+esc(g.id)+'" '+(rem>0?"":"disabled")+'>'+(rem>0?"Quero dar este presente":"Indisponível")+'</button></div></div></article>';
 }
 function gifts() {
   let inner;
