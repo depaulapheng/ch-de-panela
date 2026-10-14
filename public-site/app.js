@@ -26,7 +26,14 @@ function waitCard(text = "Buscando informações atualizadas…") {
 }
 function problemCard() { return '<div class="panel">'+notice("Não foi possível consultar os dados agora. O site continua aberto; tente novamente em instantes.","error")+'<button class="pill secondary" data-action="retry">Tentar novamente</button></div>'; }
 function pageShell(title, eyebrow, desc, contents) {
-  main.innerHTML = h(title, eyebrow, desc)+'<section class="shell content-section">'+contents+'</section>';
+  const giftsPage=title==="Lista de presentes", photosPage=title==="Fotos do Chá de Panela";
+  const narrow=title==="Confirme sua presença"||title==="Minha reserva";
+  const art=giftsPage?'<div class="romantic-scene" aria-hidden="true"><img class="botanical-photo" src="/botanical-reference-original.jpg" alt="" width="1600" height="1131"></div>':"";
+  main.innerHTML='<section class="section'+(giftsPage?" gifts-page":photosPage?" photo-page":"")+'">'+art+
+    '<div class="container"'+(narrow?' style="max-width:680px"':"")+'>'+
+    '<div class="eyebrow">'+esc(eyebrow)+'</div><h1 class="title">'+esc(title)+'</h1>'+
+    '<p class="muted" style="max-width:720px">'+esc(desc)+'</p>'+contents+
+    '</div></section>';
 }
 function fetchJSON(path, options = {}, onWait, timeout = 65000) {
   const controller = new AbortController();
