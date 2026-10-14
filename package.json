@@ -9,7 +9,8 @@
     "start:prod": "prisma migrate deploy && prisma db seed && next start -p ${PORT:-3000}",
     "lint": "next lint",
     "test": "vitest run",
-    "seed": "prisma db seed"
+    "seed": "prisma db seed",
+    "build:public": "node scripts/build-public.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed-all.ts"
