@@ -54,7 +54,7 @@ async function boot(force = false) {
     data = payload;
     photoMap = map;
     refreshing = false;
-    if (!(location.pathname === "/rsvp" && document.querySelector("#rsvp-name")?.value)) render();
+    if (!(location.pathname === "/rsvp.html" && document.querySelector("#rsvp-name")?.value)) render();
     return data;
   }).catch(() => {
     refreshing = false;
@@ -139,14 +139,14 @@ function chooseGift(id) {
     '<label class="check"><input name="confirm" type="checkbox" required>Confirmo que desejo reservar este presente. Se não puder comprar, cancelarei pelo meu link pessoal.</label>'+
     '<div id="gift-status" aria-live="polite"></div><button class="pill" id="gift-submit">Confirmar reserva 🎁</button></form></div>';
   document.body.append(overlay);
-  const close = () => { overlay.remove(); document.removeEventListener("keydown",onKey); currentGift = null; history.replaceState(null,"","/presentes"); document.body.style.overflow=""; };
+  const close = () => { overlay.remove(); document.removeEventListener("keydown",onKey); currentGift = null; history.replaceState(null,"","/presentes.html"); document.body.style.overflow=""; };
   overlay.querySelector("#close-gift").addEventListener("click",close);
   overlay.addEventListener("click",e=>{if(e.target===overlay)close();});
   const onKey=e=>{if(e.key==="Escape"){close();document.removeEventListener("keydown",onKey);}};
   document.addEventListener("keydown",onKey);
   document.body.style.overflow="hidden";
   overlay.querySelector("#guest-name").focus();
-  history.replaceState(null,"","/presentes?reservar="+encodeURIComponent(id));
+  history.replaceState(null,"","/presentes.html?reservar="+encodeURIComponent(id));
   overlay.querySelector("#gift-form").addEventListener("submit",async e=>{
     e.preventDefault();
     const f=e.currentTarget, submit=overlay.querySelector("#gift-submit"), status=overlay.querySelector("#gift-status");
@@ -154,7 +154,7 @@ function chooseGift(id) {
     submit.disabled=true; status.innerHTML=notice("Enviando reserva. Não feche a página até aparecer a confirmação.");
     try {
       const result=await fetchJSON("/api/reservations",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}, msg=>{status.innerHTML=notice(msg);});
-      const url=location.origin+"/minha-reserva/"+encodeURIComponent(result.token);
+      const url=location.origin+"/minha-reserva.html?token="+encodeURIComponent(result.token);
       const buy=safeHref(g.purchaseUrl);
       overlay.querySelector(".dialog").innerHTML='<span class="eyebrow">Reserva concluída</span><h2 id="gift-title">Presente reservado! 🎁</h2>'+
         notice("Obrigado pelo carinho! Guarde seu link pessoal para consultar ou cancelar sua reserva.","success")+
@@ -292,12 +292,12 @@ function render() {
   main.className="";
   document.title="Chá de Panela | Larissa e Pedro";
   if (path==="/") {main.innerHTML=home;updateHome();}
-  else if(path==="/presentes")gifts();
-  else if(path==="/rsvp")rsvp();
-  else if(path==="/recados")recados();
-  else if(path==="/fotos")photos();
-  else if(path==="/privacidade")privacidade();
-  else if(path.startsWith("/minha-reserva/"))myReservation(path.slice("/minha-reserva/".length));
+  else if(path==="/presentes.html")gifts();
+  else if(path==="/rsvp.html")rsvp();
+  else if(path==="/recados.html")recados();
+  else if(path==="/fotos.html")photos();
+  else if(path==="/privacidade.html")privacidade();
+  else if(path==="/minha-reserva.html")myReservation(new URLSearchParams(location.search).get("token")||"");
   else pageShell("Página não encontrada","Ops!","Este endereço não existe.",'<a class="pill" href="/" data-link>Voltar para o convite</a>');
   window.scrollTo({top:0,behavior:"instant"});
 }
