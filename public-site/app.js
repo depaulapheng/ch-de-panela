@@ -1,7 +1,7 @@
 /* Public guest interface. No backend is needed to render the initial HTML. */
 (() => {
 "use strict";
-const API = window.__PUBLIC_API_BASE__ || "https://cha-panela-pedro-larissa.onrender.com";
+const API = window.__PUBLIC_API_BASE__ || "https://cha-panela-pedro-larissa-api-neon.onrender.com";
 const main = document.getElementById("page-content");
 const home = main.innerHTML;
 let data = null, loading = null, photoMap = {}, sector = "all", photoList = null, photoFiles = [], currentGift = null, refreshing = true;
