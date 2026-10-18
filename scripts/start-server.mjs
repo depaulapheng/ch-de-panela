@@ -21,7 +21,7 @@ function run(command, args) {
 // Prisma db push is idempotent and keeps this personal project portable
 // between managed PostgreSQL providers without provider-specific setup.
 run("npx", ["prisma", "db", "push"]);
-run("npx", ["prisma", "db", "seed"]);
+run("npx", ["tsx", "prisma/seed.ts"]);
 
 const child = spawn(
   process.execPath,
