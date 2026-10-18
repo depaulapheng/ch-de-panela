@@ -22,7 +22,7 @@ const items = JSON.parse(await readFile(join(root, "lib", "verified-gift-photos.
 await writeFile(join(out, "photo-map.json"), JSON.stringify(
   Object.fromEntries(items.map(item => [item.imageUrl, item.path]))
 ));
-const apiBase = process.env.PUBLIC_API_BASE || "https://cha-panela-pedro-larissa.onrender.com";
+const apiBase = process.env.PUBLIC_API_BASE || "https://cha-panela-pedro-larissa-api-neon.onrender.com";
 const url = new URL(apiBase);
 if (url.protocol !== "https:" && url.hostname !== "localhost") {
   throw new Error("PUBLIC_API_BASE must use HTTPS");
