@@ -4,7 +4,7 @@
 const API = window.__PUBLIC_API_BASE__ || "https://cha-panela-pedro-larissa-api-neon.onrender.com";
 const main = document.getElementById("page-content");
 const home = main.innerHTML;
-let data = null, loading = null, photoMap = {}, sector = "all", photoList = null, photoFiles = [], currentGift = null, refreshing = true;
+let data = null, loading = null, catalogData = null, catalogLoading = null, giftStatusLoading = null, photoMap = {}, sector = "all", photoList = null, photoFiles = [], currentGift = null, refreshing = true;
 let clearPhotoPreviews=()=>{};
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const money = amount => amount == null || amount === "" ? "" : new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(Number(amount));
@@ -76,11 +76,40 @@ async function boot(force = false) {
   }).finally(() => { loading = null; });
   return loading;
 }
+async function loadGiftCatalog(force = false) {
+  if (catalogLoading && !force) return catalogLoading;
+  catalogLoading = Promise.all([
+    fetch("/gift-catalog.json", { cache: "force-cache" }).then(r => r.ok ? r.json() : Promise.reject(new Error("catalog"))),
+    fetch("/photo-map.json", { cache: "force-cache" }).then(r => r.ok ? r.json() : {}).catch(() => ({}))
+  ]).then(([catalog, map]) => {
+    catalogData = catalog;
+    photoMap = map;
+    if (location.pathname === "/presentes.html") gifts();
+    return catalogData;
+  }).catch(() => null).finally(() => { catalogLoading = null; });
+  return catalogLoading;
+}
+async function refreshGiftStatus() {
+  if (giftStatusLoading) return giftStatusLoading;
+  giftStatusLoading = fetch(fullApi("/api/public/gift-status"), { credentials:"omit" })
+    .then(async response => response.ok ? response.json() : Promise.reject(new Error("status")))
+    .then(payload => {
+      if (!catalogData || !Array.isArray(payload.gifts)) return payload;
+      const live = new Map(payload.gifts.map(g => [g.id, g]));
+      catalogData = {
+        ...catalogData,
+        gifts: catalogData.gifts.map(g => live.has(g.id) ? { ...g, ...live.get(g.id), __catalogOnly:false } : g)
+      };
+      if (location.pathname === "/presentes.html" && !data) gifts();
+      return payload;
+    }).catch(() => null).finally(() => { giftStatusLoading = null; });
+  return giftStatusLoading;
+}
 function onRetry() {
   refreshing = true;
-  if(location.pathname==="/presentes.html")gifts();
+  if(location.pathname==="/presentes.html"){loadGiftCatalog(true);refreshGiftStatus();gifts();}
   const quotes=main.querySelector("#quotes");if(quotes)quotes.innerHTML=waitCard();
-  boot(true);
+  if(location.pathname!=="/presentes.html")boot(true);
 }
 function originalGiftCard(g) {
   const left=remaining(g), img=imageFor(g), value=money(g.approximateValue);
@@ -162,8 +191,8 @@ function imageFor(g) {
   return safeHref(original) ? original : "";
 }
 function giftHTML(g) {
-  const rem=remaining(g),img=imageFor(g),cost=money(g.approximateValue),credit=safeHref(g.imageSourceUrl||g.imageUrl);
-  const status=rem<=0?"Já escolhido 💛":g.acceptsInstallments?rem+" cotas disponíveis":g.desiredQuantity>1?g.reservedQuantity+" de "+g.desiredQuantity+" escolhidos · faltam "+rem:"Disponível";
+  const pending=Boolean(g.__catalogOnly),rem=remaining(g),img=imageFor(g),cost=money(g.approximateValue),credit=safeHref(g.imageSourceUrl||g.imageUrl);
+  const status=pending?"Disponibilidade conferida ao reservar":rem<=0?"Já escolhido 💛":g.acceptsInstallments?rem+" cotas disponíveis":g.desiredQuantity>1?g.reservedQuantity+" de "+g.desiredQuantity+" escolhidos · faltam "+rem:"Disponível";
   return '<article class="card gift-card"><div class="gift-img">'+
     (img?'<img src="'+esc(img)+'" loading="lazy" decoding="async" alt="'+esc(g.name)+'">':'<div class="gift-photo-placeholder">'+esc(g.name)+'</div>')+
     (credit&&(g.imageCredit||g.imageLicense)?'<div class="image-credit"><a href="'+credit+'" target="_blank" rel="noopener noreferrer">Foto: '+esc(g.imageCredit||"Fonte")+(g.imageLicense?' · '+esc(g.imageLicense):"")+'</a></div>':"")+
@@ -173,31 +202,33 @@ function giftHTML(g) {
     (cost?'<div><strong>'+cost+'</strong> <span class="muted" style="font-size:12px">aprox.</span></div>':"")+
     (g.acceptsInstallments?'<div class="notice"><strong>'+rem+'</strong> de '+esc(g.installmentCount)+' cotas disponíveis</div>':"")+
     (g.colors?.length?'<div><div class="muted" style="font-size:12px">Cores preferidas: '+g.colors.map(x=>esc(x.color.name)).join(", ")+'</div><div class="color-row">'+g.colors.map(x=>'<span class="dot" title="'+esc(x.color.name)+'" style="background:'+esc(x.color.hex||"#eee")+'"></span>').join("")+'</div></div>':"")+
-    '<div class="'+(rem>0?"status-ok":"status-out")+'">'+esc(status)+'</div>'+
+    '<div class="'+(pending?"muted":rem>0?"status-ok":"status-out")+'">'+esc(status)+'</div>'+
     (g.brand?'<div class="muted" style="font-size:13px">Sugestão: '+esc(g.brand)+(g.model?' · '+esc(g.model):"")+'</div>':"")+
-    '<div style="margin-top:auto"><button class="btn btn-primary" style="width:100%" data-gift="'+esc(g.id)+'" '+(rem>0?"":"disabled")+'>'+(rem>0?"Quero dar este presente":"Indisponível")+'</button></div></div></article>';
+    '<div style="margin-top:auto"><button class="btn btn-primary" style="width:100%" data-gift="'+esc(g.id)+'" '+(!pending&&rem<=0?"disabled":"")+'>'+(!pending&&rem<=0?"Indisponível":"Quero dar este presente")+'</button></div></div></article>';
 }
 function gifts() {
   let inner;
-  if (!data) inner = refreshing ? waitCard() : problemCard();
+  const source = data || catalogData;
+  if (!source) inner = '<div class="panel"><p class="loading" role="status">Carregando a lista de presentes…</p></div>';
   else {
-    const filtered = data.gifts.filter(g => sector === "all" || g.category?.slug === sector)
+    const filtered = source.gifts.filter(g => sector === "all" || g.category?.slug === sector)
       .sort((a,b) => ["HIGH","NORMAL","OPTIONAL"].indexOf(a.priority)-["HIGH","NORMAL","OPTIONAL"].indexOf(b.priority));
     inner = '<div class="sector-filter"><label for="sector">Setor</label><select class="select" id="sector" aria-label="Filtrar por setor"><option value="all">Todos os setores</option>'+
-      data.categories.map(c => '<option value="'+esc(c.slug)+'" '+(sector===c.slug?"selected":"")+'>'+esc(c.name)+'</option>').join("")+'</select></div>'+
+      source.categories.map(c => '<option value="'+esc(c.slug)+'" '+(sector===c.slug?"selected":"")+'>'+esc(c.name)+'</option>').join("")+'</select></div>'+
       (filtered.length ? '<div class="grid grid-3">'+filtered.map(giftHTML).join("")+'</div>' : notice("Não há presentes neste setor."));
   }
   pageShell("Lista de presentes","Para o nosso lar","Escolha com carinho. Nenhum cadastro é necessário e a disponibilidade é verificada ao reservar.",inner);
   main.querySelector("#sector")?.addEventListener("change",e=>{sector=e.target.value;gifts();});
   main.querySelectorAll("[data-gift]").forEach(b => b.addEventListener("click", () => chooseGift(b.dataset.gift)));
-  if (data && new URLSearchParams(location.search).has("reservar") && !currentGift) {
+  const giftSource = data || catalogData;
+  if (giftSource && new URLSearchParams(location.search).has("reservar") && !currentGift) {
     const id = new URLSearchParams(location.search).get("reservar");
-    if (data.gifts.some(g => g.id === id)) chooseGift(id);
+    if (giftSource.gifts.some(g => g.id === id)) chooseGift(id);
   }
 }
 function chooseGift(id) {
-  if (!data) return;
-  const g = data.gifts.find(g => g.id === id);
+  const giftSource = data?.gifts || catalogData?.gifts || [];
+  const g = giftSource.find(g => g.id === id);
   if (!g || remaining(g)<=0) { alert("Este presente não está mais disponível."); return; }
   currentGift = g;
   const requestToken = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
@@ -240,11 +271,11 @@ function chooseGift(id) {
         try{await navigator.clipboard.writeText(url); overlay.querySelector("#copy-link").textContent="Link copiado!";}
         catch{overlay.querySelector("#copy-link").textContent="Selecione e copie o link";}
       });
-      overlay.querySelector("#close-success").addEventListener("click",()=>{close();boot(true);});
+      overlay.querySelector("#close-success").addEventListener("click",()=>{close();refreshGiftStatus();});
     } catch(err) {
       status.innerHTML=notice(err.message || "Não foi possível reservar. Tente novamente.","error");
       submit.disabled=false;
-      if (err.status===409) boot(true);
+      if (err.status===409) refreshGiftStatus();
     }
   });
 }
@@ -379,14 +410,14 @@ function render() {
   main.className="";
   document.title="Chá de Panela | Larissa e Pedro";
   if (path==="/") {main.innerHTML=home;updateHome();updateCountdowns();}
-  else if(path==="/presentes.html")gifts();
+  else if(path==="/presentes.html"){gifts();if(!catalogData&&!catalogLoading)loadGiftCatalog();if(!giftStatusLoading)refreshGiftStatus();}
   else if(path==="/rsvp.html")rsvp();
   else if(path==="/recados.html")recados();
   else if(path==="/fotos.html")photos();
   else if(path==="/privacidade.html")privacidade();
   else if(path==="/minha-reserva.html")myReservation(new URLSearchParams(location.search).get("token")||"");
   else pageShell("Página não encontrada","Ops!","Este endereço não existe.",'<a class="pill" href="/" data-link>Voltar para o convite</a>');
-  if(["/","/presentes.html","/rsvp.html","/recados.html"].includes(path)&&!data&&!loading)boot();
+  if(["/","/rsvp.html","/recados.html"].includes(path)&&!data&&!loading)boot();
   window.scrollTo({top:0,behavior:"instant"});
 }
 document.addEventListener("click",e=>{
