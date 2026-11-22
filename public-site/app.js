@@ -328,7 +328,7 @@ function quoteHTML() {
 }
 function photos() {
   pageShell("Fotos do Chá de Panela","Nosso álbum compartilhado","Envie e baixe as fotos deste dia especial.",
-    '<div class="card photo-upload-card"><h3 class="subtitle">Compartilhe suas fotos</h3><p>Até 10 fotos por envio · 8 MB por foto · JPG, PNG, WEBP ou HEIC.</p>'+
+    '<div class="card photo-upload-card"><h3 class="subtitle">Compartilhe suas fotos</h3><p>Selecione até 300 fotos de uma vez · 8 MB por foto · JPG, PNG, WEBP ou HEIC. O envio é feito automaticamente em lotes para manter a estabilidade.</p>'+
     '<label class="drop photo-drop">Escolher fotos<input id="photos-files" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple></label>'+
     '<p id="photos-selected" aria-live="polite"></p><div id="upload-preview" class="photo-grid"></div><div id="photo-status" aria-live="polite"></div><button class="pill" id="photo-send" disabled>Enviar para o álbum</button></div>'+
     '<div class="row-actions"><h2>Galeria</h2><button class="pill outlined" data-action="refresh-photos">Atualizar galeria</button></div><div id="photos-content">'+waitCard("Carregando fotos do álbum…")+'</div>');
@@ -337,21 +337,37 @@ function photos() {
   clearPhotoPreviews=()=>{previewUrls.forEach(url=>URL.revokeObjectURL(url));previewUrls=[];};
   const chooseFiles=selected=>{
     previewUrls.forEach(url=>URL.revokeObjectURL(url));previewUrls=[];
-    photoFiles=selected.filter(f=>["image/jpeg","image/png","image/webp","image/heic","image/heif"].includes(f.type)&&f.size>0&&f.size<=8*1024*1024).slice(0,10);
-    main.querySelector("#photos-selected").textContent=photoFiles.length+" foto(s) selecionada(s)"+(photoFiles.length!==selected.length?". Arquivos fora dos limites foram ignorados.":"");
-    main.querySelector("#upload-preview").innerHTML=photoFiles.map(f=>{const url=URL.createObjectURL(f);previewUrls.push(url);return '<img src="'+url+'" alt="Prévia de '+esc(f.name)+'" style="width:100%;height:140px;object-fit:contain">';}).join("");
+    photoFiles=selected.filter(f=>["image/jpeg","image/png","image/webp","image/heic","image/heif"].includes(f.type)&&f.size>0&&f.size<=8*1024*1024).slice(0,300);
+    main.querySelector("#photos-selected").textContent=photoFiles.length+" foto(s) selecionada(s)"+(selected.length>300?". Limite de 300 fotos por seleção.":photoFiles.length!==selected.length?". Arquivos fora dos limites foram ignorados.":"");
+    const previewFiles=photoFiles.slice(0,24);main.querySelector("#upload-preview").innerHTML=previewFiles.map(f=>{const url=URL.createObjectURL(f);previewUrls.push(url);return '<img src="'+url+'" alt="Prévia de '+esc(f.name)+'" style="width:100%;height:140px;object-fit:contain">';}).join("")+(photoFiles.length>24?'<div class="panel" style="display:grid;place-items:center;min-height:140px"><strong>+'+(photoFiles.length-24)+' fotos</strong></div>':"");
     button.disabled=!photoFiles.length;
   };
   input.addEventListener("change",()=>chooseFiles(Array.from(input.files)));
   const drop=main.querySelector(".drop");drop.addEventListener("dragover",e=>e.preventDefault());drop.addEventListener("drop",e=>{e.preventDefault();chooseFiles(Array.from(e.dataTransfer.files));});
   button.addEventListener("click",async()=>{
-    if(!photoFiles.length)return;button.disabled=true;
-    const body=new FormData();photoFiles.forEach(f=>body.append("photos",f));
-    const status=main.querySelector("#photo-status");status.innerHTML=notice("Enviando fotos. Aguarde a confirmação.");
+    if(!photoFiles.length)return;button.disabled=true;input.disabled=true;
+    const status=main.querySelector("#photo-status");
+    const filesToSend=[...photoFiles], batchSize=10, totalBatches=Math.ceil(filesToSend.length/batchSize);
+    let uploadedCount=0;
     try{
-      const result=await fetchJSON("/api/photos",{method:"POST",body},msg=>status.innerHTML=notice(msg),100000);
-      status.innerHTML=notice(result.count+" foto(s) enviada(s) com sucesso!","success");input.value="";chooseFiles([]);await loadPhotos();
-    }catch(err){status.innerHTML=notice(err.message,"error");}finally{button.disabled=!photoFiles.length;}
+      for(let start=0,batchNumber=1;start<filesToSend.length;start+=batchSize,batchNumber++){
+        const batch=filesToSend.slice(start,start+batchSize);
+        const body=new FormData();batch.forEach(f=>body.append("photos",f));
+        status.innerHTML=notice("Enviando lote "+batchNumber+" de "+totalBatches+" · "+uploadedCount+" de "+filesToSend.length+" fotos concluídas…");
+        let result;
+        try{
+          result=await fetchJSON("/api/photos",{method:"POST",body},msg=>status.innerHTML=notice(msg),120000);
+        }catch(firstError){
+          status.innerHTML=notice("Repetindo o lote "+batchNumber+" de "+totalBatches+"…");
+          result=await fetchJSON("/api/photos",{method:"POST",body},null,120000);
+        }
+        uploadedCount+=Number(result.count||batch.length);
+      }
+      status.innerHTML=notice(uploadedCount+" foto(s) enviada(s) com sucesso!","success");input.value="";chooseFiles([]);await loadPhotos();
+    }catch(err){
+      const remaining=filesToSend.slice(uploadedCount);photoFiles=remaining;chooseFiles(remaining);
+      status.innerHTML=notice(uploadedCount+" foto(s) enviadas. O envio parou antes de concluir todas: "+(err.message||"tente novamente."),"error");
+    }finally{input.disabled=false;button.disabled=!photoFiles.length;}
   });
   loadPhotos();
 }
