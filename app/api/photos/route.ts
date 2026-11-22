@@ -19,7 +19,7 @@ export async function GET() {
     const dbPhotos = await prisma.guestPhoto.findMany({
       select: { id: true, fileName: true, mimeType: true, size: true, createdAt: true },
       orderBy: { createdAt: "desc" },
-      take: 300
+      take: 1000
     });
     const photos: Array<{ id: string; fileName: string; mimeType: string; size: number; createdAt: Date; url: string; downloadUrl: string; source: "database" | "cloudinary" }> = dbPhotos.map(photo => ({
       ...photo,
