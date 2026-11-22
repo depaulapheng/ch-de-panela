@@ -8,7 +8,7 @@ export default async function AdminPhotosPage() {
   const photos = await prisma.guestPhoto.findMany({
     select: { id: true, fileName: true, size: true, createdAt: true },
     orderBy: { createdAt: "desc" },
-    take: 300
+    take: 1000
   });
 
   return <AdminShell>
