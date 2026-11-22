@@ -354,13 +354,7 @@ function photos() {
         const batch=filesToSend.slice(start,start+batchSize);
         const body=new FormData();batch.forEach(f=>body.append("photos",f));
         status.innerHTML=notice("Enviando lote "+batchNumber+" de "+totalBatches+" · "+uploadedCount+" de "+filesToSend.length+" fotos concluídas…");
-        let result;
-        try{
-          result=await fetchJSON("/api/photos",{method:"POST",body},msg=>status.innerHTML=notice(msg),120000);
-        }catch(firstError){
-          status.innerHTML=notice("Repetindo o lote "+batchNumber+" de "+totalBatches+"…");
-          result=await fetchJSON("/api/photos",{method:"POST",body},null,120000);
-        }
+        const result=await fetchJSON("/api/photos",{method:"POST",body},msg=>status.innerHTML=notice(msg),120000);
         uploadedCount+=Number(result.count||batch.length);
       }
       status.innerHTML=notice(uploadedCount+" foto(s) enviada(s) com sucesso!","success");input.value="";chooseFiles([]);await loadPhotos();
